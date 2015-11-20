@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- 配置文件说明： 第一步是取出body部分我表达式
+	第二步取出各个需要的数据的表达式 -->
+<urls>
+	<hbase>true</hbase>
+	<path>/jsoup</path>
+	<url>
+		<url-value>http://club.autohome.com.cn/bbs/thread.*</url-value>
+		<encode>gb2312</encode>
+		<forumbody>body #topic_detail_main #content #cont_main div[id^=maxwrap] div[id^=F]</forumbody>
+
+		<regex>
+			<value>[class=txtcenter fw]</value>
+			<description>userName</description>
+		</regex>
+		<regex>
+			<value>a[class=rightbutlz fr], div[class=fr]</value>
+			<description>floor</description>	
+		</regex>
+		<regex>
+			<value>span[xname=date]</value>
+			<description>time</description>
+		</regex>
+		<regex>
+			<value>li:eq(4)</value>
+			<description>registTime</description>
+		</regex>
+		<regex>
+			<value>li:eq(5) a</value>
+			<description>area</description>
+		</regex>
+		<regex>
+			<value>li:eq(6) a</value>
+			<description>car</description>
+		</regex>
+		<regex>
+		<value>[class=conttxt], [class=w740]</value>
+			<description>comment</description>
+		</regex>
+	</url>
+	
+	<url>
+		<url-value>http://k.autohome.com.cn/</url-value>
+		<encode>gb2312</encode>
+		<forumbody>div[class=mouthcon js-koubeidataitembox]</forumbody>
+		
+		<regex>a[href~=http://i.autohome.com.cn/[0-9]]</regex>
+		<regex>
+			<value>dl[class=choose-dl]:contains(购买车型)</value>
+			<description>buycar</description>
+		</regex>
+		<regex>
+			<value>dl[class=choose-dl]:contains(购买地点)</value>
+			<description>buyplace</description>
+		</regex>
+		<regex>
+			<value>dl[class=choose-dl]:contains(购买时间)</value>
+			<description>buytime</description>
+		</regex>
+		<regex>
+			<value>dl[class=choose-dl]:contains(裸车购买价)</value>
+			<description>buyprice</description>
+		</regex>
+		<regex>
+			<value>div[class=position-r] dl[class=choose-dl]</value>
+			<description>socre</description>
+		</regex>
+		<regex>
+			<value>div[class=cont-title fn-clear], dl[class=add-dl], div[class=text-con height-list]</value>
+			<description>comment</description>
+		</regex>
+		
+	</url>
+
+	<url>
+		<url-value>http://qy.58.com/[0-9].*/</url-value>
+		<encode>utf-8</encode>
+		<forumbody>body</forumbody>
+		<regex>
+			<value>#crumbs a:eq(1)</value>
+			<description>area</description>
+		</regex>
+		<regex>
+			<value>h1</value>
+			<description>company</description>
+		</regex>
+		<regex>
+			<value>table td span[title^=营业执照]</value>
+			<description>certification</description>
+		</regex>
+		<regex>
+			<value>table td a[class=c33]</value>
+			<description>industry</description>
+		</regex>
+		<regex>
+			<value>table td:matchesOwn([0-9].*人)</value>
+			<description>employee</description>
+		</regex>
+		<regex>
+			<value>table tr:eq(2) td:eq(1)</value>
+			<description>contracts</description>
+		</regex>
+		<regex>
+			<value>table td[class=telNum]</value>
+			<description>mobile</description>
+		</regex>
+		<regex>
+			<value>table a[rel=nofollow]</value>
+			<description>website</description>
+		</regex>
+		<regex>
+			<value>table td[class=adress] span</value>
+			<description>address</description>
+		</regex>
+		<regex>
+			<value>table tr:eq(0) td:last-of-type</value>
+			<description>property</description>
+		</regex>
+		<regex>
+			<value>div[class=compIntro] p</value>
+			<description>introduction</description>
+		</regex>
+	</url>
+	<url>
+		<url-value>http://www.ganji.com/gongsi/[\d].*/</url-value>
+		<encode>utf-8</encode>
+		<forumbody>body</forumbody>
+		<regex>
+			<value>#wrapper div[class=crumbs clearfix] a:eq(1)</value>
+			<description>area</description>
+		</regex>
+		
+		<regex>
+			<value>#company_description</value>
+			<description>introduction</description>
+		</regex>
+		<regex>
+			<value>#wrapper div[class=l-d-con] div[class=d-c-left] div[class=c-introduce] ul li:eq(0)</value>
+			<description>company</description>
+		</regex>
+		<regex>
+			<value>#wrapper div[class=l-d-con] div[class=d-c-left] div[class=c-introduce] ul li:eq(1)</value>
+			<description>employee</description>
+		</regex>
+		<regex>
+			<value>#wrapper div[class=l-d-con] div[class=d-c-left] div[class=c-introduce] ul li:eq(2) a</value>
+			<description>industry</description>
+		</regex>
+		<regex>
+			<value>#wrapper div[class=l-d-con] div[class=d-c-left] div[class=c-introduce] ul li:eq(3) a</value>
+			<description>property</description>
+		</regex>
+		<regex>
+			<value>#wrapper div[class=l-d-con] div[class=d-c-left] div[class=c-introduce] ul li:eq(6)</value>
+			<description>address</description>
+		</regex>
+	</url>
+	
+</urls>

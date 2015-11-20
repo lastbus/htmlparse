@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- 需要解析的文件路径写在这里，解析过的路径注释，留作备份，如果不注释则会再次被解析 -->
+<configuration>
+
+    <path hbase="hh" class="qy58Parser">/user/nutch/qy58/crawl/segments/2*/content/part*/data</path>
+    <path hbase="testName" class="testClass">/test</path>
+</configuration>

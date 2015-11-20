@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="Encoding">
+    <file url="file://$PROJECT_DIR$/src/main/scala/com/shgc/htmlparse/Main.scala" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/src/main/scala/com/shgc/htmlparse/parse/AutoHomeParser.scala" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/src/main/scala/com/shgc/htmlparse/parse/Parser.scala" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/src/main/scala/com/shgc/htmlparse/parse/Qy58Parser.scala" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/src/main/scala/com/shgc/htmlparse/util/ParseConfiguration.scala" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/src/main/scala/com/shgc/htmlparse/util/Selector.scala" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/src/main/scala/com/shgc/htmlparse/util/SparkManagerFactor.scala" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/src/test/scala/com/shgc/htmlparseTest/jsoupTest/JSoupTest.scala" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/src/test/scala/com/shgc/htmlparseTest/util/ParseConfigurationTest.scala" charset="UTF-8" />
+  </component>
+</project>

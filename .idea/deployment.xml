@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="PublishConfigData" serverName="10.0.0.200">
+    <serverData>
+      <paths name="10.0.0.200">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/home/make/parse" local="$PROJECT_DIR$/target" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
+    </serverData>
+  </component>
+</project>

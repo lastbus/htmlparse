@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- 解析器的配置文件，写好selector不需要每次都编译程序 -->
+<parseConf>
+    <url name="http://qy.58.com/[0-9].*/" encoding="utf-8">
+        <body>body</body>
+        <selector value="#crumbs a:eq(1)">
+            <columnFamily>comments</columnFamily>
+            <column>area</column>
+        </selector>
+        <selector value="h1">
+            <columnFamily>comments</columnFamily>
+            <column>company</column>
+        </selector>
+        <selector value="table td span[title^=营业执照]">
+            <columnFamily>comments</columnFamily>
+            <column>certification</column>
+        </selector>
+        <selector value="table td a[class=c33]">
+            <columnFamily>comments</columnFamily>
+            <column>industry</column>
+        </selector>
+        <selector value="table td:matchesOwn([0-9].*人)">
+            <columnFamily>comments</columnFamily>
+            <column>employee</column>
+        </selector>
+        <selector value="table tr:eq(2) td:eq(1)">
+            <columnFamily>comments</columnFamily>
+            <column>contracts</column>
+        </selector>
+        <selector value="table td[class=telNum]">
+            <columnFamily>comments</columnFamily>
+            <column>mobile</column>
+        </selector>
+        <selector value="table a[rel=nofollow]">
+            <columnFamily>comments</columnFamily>
+            <column>website</column>
+        </selector>
+        <selector value="table td[class=adress] span">
+            <columnFamily>comments</columnFamily>
+            <column>address</column>
+        </selector>
+        <selector value="table tr:eq(0) td:last-of-type">
+            <columnFamily>comments</columnFamily>
+            <column>property</column>
+        </selector>
+        <selector value="div[class=compIntro] p">
+            <columnFamily>comments</columnFamily>
+            <column>introduction</column>
+        </selector>
+    </url>
+
+    <url name="http://club.autohome.com.cn/bbs/thread.*" encoding="gb2312">
+        <body>body #topic_detail_main #content #cont_main div[id^=maxwrap] div[id^=F</body>
+        <selector value="[class=txtcenter fw]">
+            <columnFamily>comments</columnFamily>
+            <column>username</column>
+        </selector>
+        <selector value="a[class=rightbutlz fr], div[class=fr]">
+            <columnFamily>comments</columnFamily>
+            <column>floor</column>
+        </selector>
+        <selector value="span[xname=date]">
+            <columnFamily>comments</columnFamily>
+            <column>time</column>
+        </selector>
+        <selector value="li:eq(4)">
+            <columnFamily>comments</columnFamily>
+            <column>registerTime</column>
+        </selector>
+        <selector value="li:eq(5) a">
+            <columnFamily>comments</columnFamily>
+            <column>area</column>
+        </selector>
+        <selector value="li:eq(6) a">
+            <columnFamily>comments</columnFamily>
+            <column>car</column>
+        </selector>
+        <selector value="[class=conttxt], [class=w740]">
+            <columnFamily>comments</columnFamily>
+            <column>comment</column>
+        </selector>
+        <strategy>
+            <selectors>
+                <!-- 评论回复 -->
+                <selector value=".w740 .relyhfcon p a:contains(楼)">
+                    <columnFamily>comments</columnFamily>
+                    <column></column>
+                </selector>
+                <selector value=".w740 .rrlycontxt">
+                    <columnFamily></columnFamily>
+                    <column></column>
+                </selector>
+                <selector value=".w740 .yy_reply_cont">
+                    <columnFamily>comments</columnFamily>
+                    <column></column>
+                </selector>
+            </selectors>
+
+            <selectors>
+                <selector value=".w740">
+                    <columnFamily>comments</columnFamily>
+                    <column></column>
+                </selector>
+            </selectors>
+        </strategy>
+    </url>
+
+    <url name="http://">
+        <selector value="">
+            <columnFamily>comments</columnFamily>
+            <column></column>
+        </selector>
+        <selector value="">
+            <columnFamily>comments</columnFamily>
+            <column></column>
+        </selector>
+        <selector value="">
+            <columnFamily>comments</columnFamily>
+            <column></column>
+        </selector><selector value="">
+        <columnFamily>comments</columnFamily>
+        <column></column>
+    </selector>
+        <selector value="">
+            <columnFamily>comments</columnFamily>
+            <column></column>
+        </selector><selector value="">
+        <columnFamily>comments</columnFamily>
+        <column></column>
+    </selector>
+        <selector value="">
+            <columnFamily>comments</columnFamily>
+            <column></column>
+        </selector>
+        <selector value="">
+            <columnFamily>comments</columnFamily>
+            <column></column>
+        </selector>
+        <selector value="">
+            <columnFamily>comments</columnFamily>
+            <column></column>
+        </selector>
+        <selector value="">
+            <columnFamily>comments</columnFamily>
+            <column></column>
+        </selector>
+        <selector value="">
+            <columnFamily>comments</columnFamily>
+            <column></column>
+        </selector><selector value="">
+            <columnFamily>comments</columnFamily>
+            <column></column>
+        </selector>
+        <selector value="">
+            <columnFamily>comments</columnFamily>
+            <column></column>
+        </selector><selector value="">
+            <columnFamily>comments</columnFamily>
+            <column></column>
+        </selector>
+        <selector value="">
+            <columnFamily>comments</columnFamily>
+            <column></column>
+        </selector>
+    </url>
+</parseConf>
