@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!-- 解析器的配置文件，写好selector不需要每次都编译程序 -->
-<parseConf>
+<parseConf
+        xmlns="http://www.w3school.com.cn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.w3school.com.cn myConf.xsd">
+
     <url name="http://qy.58.com/[0-9].*/" encoding="utf-8">
         <body>body</body>
         <selector value="#crumbs a:eq(1)">
