@@ -34,18 +34,35 @@ object ParseConfiguration extends Serializable{
       val encoding = (url \ "@encoding").text
       val body = (url \ "body").text
       val array = decodeSelector(url \ "selector")
+
       val strategy = url \ "strategy"
+      val keys = url \ "key"
+      val separator =  url \ "separator"
 
       var strategyArray: Array[Array[(String, String, String)]] = null
-      if(strategy.size > 0){
-        strategyArray = new Array[Array[(String, String, String)]](strategy.size)
+      if(strategy != null){
+        val selectors = strategy \ "selectors"
+        strategyArray = new Array[Array[(String, String, String)]](selectors.size)
         var i = 0
-        for(s <- strategy \ "selectors"){
+        for(s <- selectors){
           strategyArray(i) = decodeSelector(s \ "selector")
           i += 1
         }
       }
-      if (strategyArray != null) urlMap(Pattern.compile(name)) = new Selector(name, encoding, body, array, strategyArray)
+
+      var keyArray: Array[String] = null
+      if(keys != null){
+        keyArray = new Array[String](keys.size)
+        var i = 0
+        for(key <- keys){
+          keyArray(i) = key.text
+          i += 1
+        }
+      }
+
+
+      if (strategyArray != null && keyArray != null)
+        urlMap(Pattern.compile(name)) = new Selector(name, encoding, body, array, strategyArray, keyArray, separator.text)
       else urlMap(Pattern.compile(name)) = new Selector(name, encoding, body, array)
     }
     true

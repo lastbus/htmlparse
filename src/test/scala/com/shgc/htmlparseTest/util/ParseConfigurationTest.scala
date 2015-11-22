@@ -71,5 +71,10 @@ class ParseConfigurationTest {
     assertEquals("comments", selector.select(1)._2)
     assertEquals("floor", selector.select(1)._3)
 
+
+    assertEquals("|", selector.separator)
+    assertEquals("car", selector.keys(0))
+    assertEquals("floor", selector.keys(1))
+
   }
 }

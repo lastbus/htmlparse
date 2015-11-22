@@ -1,5 +1,6 @@
 package com.shgc.htmlparse.parse
 
+import java.net.URL
 import java.util.regex.Pattern
 
 import com.shgc.htmlparse.util.Selector
@@ -7,6 +8,7 @@ import org.apache.hadoop.hbase.client.Put
 import org.apache.hadoop.hbase.util.Bytes
 import org.apache.nutch.protocol.Content
 import org.jsoup.Jsoup
+import org.jsoup.nodes.Element
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -18,33 +20,51 @@ class AutoHomeParser extends Parser{
   override def run(content: Content, selector: Selector): Array[Put] = {
     val html = new String(content.getContent, selector.encoding)
     val url = content.getUrl
+    val host = new URL(url).getHost
+    val putsArrayBuffer = new ArrayBuffer[Put]
+    val keys = selector.keys
     val doc = Jsoup.parse(html)
+    val separator = selector.separator
+
     val list = doc.select(selector.body)
-    val arrayBuffer = new ArrayBuffer[Put]
     for(element <- elements2List(list)){
-      val put = new Put(Bytes.toBytes(url))
-      for(sel <- selector.select){
-        put.addColumn(Bytes.toBytes(sel._2),
-          Bytes.toBytes(sel._3),
-          Bytes.toBytes(element.select(sel._1).text()))
+      //将取出的值放入一个临时的 ArrayBuffer 中
+      val values = new ArrayBuffer[(String, String, String)]
+
+      for((select, columnFamily, column) <- selector.select){
+        values += ((columnFamily, column, element.select(select).text()))
       }
-      for(strategy <- selector.strategySelector){
-//        val p =
+
+      //一种情况是回复别人，另一种是发言
+      if(element.select(selector.strategySelector(0)(0)._1).text().length > 0) {
+        for (sel <- selector.strategySelector(0)) {
+          values += ((sel._2, sel._3, element.select(sel._1).text()))
+        }
+      }else{
+        for(sel <- selector.strategySelector(1)){
+          values += ((sel._2, sel._3, element.select(sel._1).text()))
+        }
       }
-      arrayBuffer += put
+
+      val keyBuffer = new StringBuilder(host + separator)
+      //生成主键
+      for(key <- keys){
+        for(col <- values if (col._2.equalsIgnoreCase(key))){
+          keyBuffer.append(col + separator)
+        }
+      }
+      //make the Put
+      val put = new Put(Bytes.toBytes(keyBuffer.toString()))
+      for((columnFamily, column, value) <- values){
+        put.addColumn(Bytes.toBytes(columnFamily), Bytes.toBytes(column), Bytes.toBytes(value))
+      }
+      putsArrayBuffer += put
     }
-    arrayBuffer.toArray
+    putsArrayBuffer.toArray
 
     null
   }
 
-//  def getColums(selector: Array[(String, String, String)], put: Put): Unit ={
-//    for(sel <- selector){
-//      put.addColumn(Bytes.toBytes(sel._2),
-//        Bytes.toBytes(sel._3),
-//        Bytes.toBytes(element.select(sel._1).text()))
-//    }
-//  }
 
 
 

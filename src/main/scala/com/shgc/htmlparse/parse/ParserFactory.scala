@@ -10,11 +10,17 @@ object ParserFactory extends Serializable{
 
   def getParser(className: String): Parser ={
     if(className.equalsIgnoreCase("forumParser"))
-      if (forumParser == null) {
-        forumParser = new Qy58Parser
-        forumParser.urlMap = ParseConfiguration.urlMap.toMap
-        forumParser
-      } else forumParser
+      getQy58Parser()
     else null
+  }
+
+
+
+  def getQy58Parser(): Parser ={
+    if (forumParser == null) {
+      forumParser = new Qy58Parser
+      forumParser.urlMap = ParseConfiguration.urlMap.toMap
+      forumParser
+    } else forumParser
   }
 }

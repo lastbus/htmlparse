@@ -12,21 +12,21 @@
       <scala.compat.version>2.10</scala.compat.version>
   </properties>
 
-  <!--<repositories>-->
-    <!--<repository>-->
-      <!--<id>scala-tools.org</id>-->
-      <!--<name>Scala-Tools Maven2 Repository</name>-->
-      <!--<url>http://scala-tools.org/repo-releases</url>-->
-    <!--</repository>-->
-  <!--</repositories>-->
+  <repositories>
+    <repository>
+      <id>scala-tools.org</id>
+      <name>Scala-Tools Maven2 Repository</name>
+      <url>http://scala-tools.org/repo-releases</url>
+    </repository>
+  </repositories>
 
-  <!--<pluginRepositories>-->
-    <!--<pluginRepository>-->
-      <!--<id>scala-tools.org</id>-->
-      <!--<name>Scala-Tools Maven2 Repository</name>-->
-      <!--<url>http://scala-tools.org/repo-releases</url>-->
-    <!--</pluginRepository>-->
-  <!--</pluginRepositories>-->
+  <pluginRepositories>
+    <pluginRepository>
+      <id>scala-tools.org</id>
+      <name>Scala-Tools Maven2 Repository</name>
+      <url>http://scala-tools.org/repo-releases</url>
+    </pluginRepository>
+  </pluginRepositories>
 
   <dependencies>
     <dependency>
@@ -83,14 +83,16 @@
             <artifactId>jsoup</artifactId>
             <version>1.8.3</version>
       </dependency>
-      <dependency>
-      <groupId>com.shgc.htmlParser</groupId>
-      <artifactId>htmlParser</artifactId>
-      <version>1.0</version>
-      <scope>system</scope>
-      <!--本地jar的路径,相对或者绝对都可以-->
-      <systemPath>C:/Users/Administrator/Desktop/htmlParser-0.0.1-SNAPSHOT.jar</systemPath>
-  </dependency>
+
+      <!--<dependency>-->
+      <!--<groupId>com.shgc.htmlParser</groupId>-->
+      <!--<artifactId>htmlParser</artifactId>-->
+      <!--<version>1.0</version>-->
+      <!--<scope>system</scope>-->
+      <!--&lt;!&ndash;本地jar的路径,相对或者绝对都可以&ndash;&gt;-->
+      <!--<systemPath>C:/Users/Administrator/Desktop/htmlParser-0.0.1-SNAPSHOT.jar</systemPath>-->
+  <!--</dependency>-->
+
 </dependencies>
 
   <build>

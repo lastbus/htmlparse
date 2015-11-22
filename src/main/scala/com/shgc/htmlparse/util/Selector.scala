@@ -11,7 +11,10 @@ class Selector extends Serializable{
   var encoding: String = null
   var body: String = null
   var select: Array[(String, String, String)] = null
+
   var strategySelector: Array[Array[(String, String, String)]] = null
+  var keys: Array[String] = null
+  var separator: String = null
 
   def this(url: String, encoding: String, body: String, select: Array[(String, String, String)]) = {
     this()
@@ -31,6 +34,20 @@ class Selector extends Serializable{
     this.body = body
     this.select = select
     this.strategySelector = strategySelector
+  }
+
+
+  def this(url: String, encoding: String, body: String, select: Array[(String, String, String)],
+           strategy: Array[Array[(String, String, String)]], keys: Array[String], separator: String) = {
+    this()
+    this.url = url
+    this.urlPattern = Pattern.compile(url)
+    this.encoding = encoding
+    this.body = body
+    this.select = select
+    this.strategySelector = strategySelector
+    this.keys = keys
+    this.separator = separator
   }
 
 }

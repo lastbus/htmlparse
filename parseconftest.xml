@@ -50,6 +50,11 @@
     </url>
 
     <url name="http://club.autohome.com.cn/bbs/thread.*" encoding="gb2312">
+
+        <key>car</key>
+        <key>floor</key>
+
+        <separator>|</separator>
         <body>body #topic_detail_main #content #cont_main div[id^=maxwrap] div[id^=F</body>
         <selector value="[class=txtcenter fw]">
             <columnFamily>comments</columnFamily>
@@ -95,7 +100,7 @@
                     <column></column>
                 </selector>
             </selectors>
-
+            <!-- 正常发言 -->
             <selectors>
                 <selector value=".w740">
                     <columnFamily>comments</columnFamily>
