@@ -25,7 +25,7 @@ class JsoupTest {
 
 
 
-  @Test
+//  @Test
   def main2: Unit ={
     val url = "http://club.autohome.com.cn/bbs/thread-c-3217-46839120-1.html"
     //    require(ParseConfiguration.readConf())

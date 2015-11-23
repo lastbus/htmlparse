@@ -33,6 +33,7 @@ object SparkManagerFactor {
   def getHBaseConf(): Configuration ={
     if(hBaseConf != null) hBaseConf else{
       hBaseConf = HBaseConfiguration.create()
+      hBaseConf.addResource("hbase-site.xml")
       hBaseConf
     }
   }
@@ -43,6 +44,7 @@ object SparkManagerFactor {
     if(!check){
       if (hBaseConf == null) {
         hBaseConf = HBaseConfiguration.create()
+        hBaseConf.addResource("hbase-site.xml")
         hBaseConf.set(connType, tableName)
         hBaseConf
       } else if (hBaseConf.get(connType).equals(tableName)) hBaseConf
@@ -58,6 +60,7 @@ object SparkManagerFactor {
   def getHBaseHadoopConf(tableName: String): Configuration ={
     if(hBaseConf == null){
       hBaseConf = HBaseConfiguration.create()
+      hBaseConf.addResource("hbase-site.xml")
       hBaseConf.set(TableOutputFormat.OUTPUT_TABLE, tableName)
 //      val job = new Job(hBaseConf)
       val job = Job.getInstance(hBaseConf, tableName)

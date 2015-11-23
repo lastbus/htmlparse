@@ -7,11 +7,14 @@ import com.shgc.htmlparse.util.ParseConfiguration
  */
 object ParserFactory extends Serializable{
   private[this] var forumParser: Qy58Parser = null
+  private[this] var autoHomeParser: AutoHomeParser2 = null
 
   def getParser(className: String): Parser ={
     if(className.equalsIgnoreCase("forumParser"))
-      getQy58Parser()
-    else null
+      return getQy58Parser()
+    else if(className.equalsIgnoreCase("autohomeparser")){
+      return getAutoHomeParser()
+    }else null
   }
 
 
@@ -22,5 +25,14 @@ object ParserFactory extends Serializable{
       forumParser.urlMap = ParseConfiguration.urlMap.toMap
       forumParser
     } else forumParser
+  }
+
+
+  def getAutoHomeParser(): Parser ={
+    if (autoHomeParser == null) {
+      autoHomeParser = new AutoHomeParser2
+      autoHomeParser.urlMap = ParseConfiguration.urlMap.toMap
+      autoHomeParser
+    } else autoHomeParser
   }
 }

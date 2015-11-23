@@ -25,13 +25,13 @@ class ParseConfigurationTest {
     //test http://qy.58.com/
     testUrl1(url1, urlMap)
     //test http://club.autohome.com.cn/
-    testAutoHome(url2, urlMap)
+//    testAutoHome(url2, urlMap)
 
     val hdfs2HBaseMap = ParseConfiguration.hdfs2HBaseMap
     val path1 = "/user/nutch/qy58/crawl/segments/2*/content/part*/data"
-    val value = hdfs2HBaseMap(path1)
-    assertEquals("hh", value._1)
-    assertEquals("forumParser", value._2)
+//    val value = hdfs2HBaseMap(path1)
+//    assertEquals("hh", value._1)
+//    assertEquals("forumParser", value._2)
 
 
   }

@@ -32,9 +32,12 @@ class Qy58Parser extends Parser{
     for(element <- elements2List(list)){
       val put = new Put(Bytes.toBytes(url))
       for(sel <- selector.select){
-        put.addColumn(Bytes.toBytes(sel._2),
-          Bytes.toBytes(sel._3),
-          Bytes.toBytes(element.select(sel._1).text()))
+        val text = element.select(sel._1)
+        if(text != null){
+          put.addColumn(Bytes.toBytes(sel._2),
+            Bytes.toBytes(sel._3),
+            Bytes.toBytes(text.text()))
+        }
       }
       arrayBuffer += put
     }
