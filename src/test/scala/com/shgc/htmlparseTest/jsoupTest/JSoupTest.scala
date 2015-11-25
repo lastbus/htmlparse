@@ -5,7 +5,7 @@ import java.net.URL
 import java.util.regex.Pattern
 
 import com.shgc.htmlparse.parse.Qy58Parser
-import com.shgc.htmlparse.util.ParseConfiguration
+import com.shgc.htmlparse.util.{NumExtractUtil, ParseConfiguration}
 import org.apache.hadoop.hbase.util.Bytes
 import org.apache.nutch.protocol.Content
 import org.jsoup.Jsoup
@@ -33,18 +33,16 @@ class JsoupTest {
     //    val selector = selectorMap.filter(_._1.matcher(url).matches()).head._2
     val html = Jsoup.connect(url).get().toString
     val doc = Jsoup.parse(html)
-    val bbsName = doc.select("#a_bbsname")
-    val matcher = Pattern.compile("论坛").matcher(bbsName.text())
-    println(bbsName.text())
-    if(matcher.find()){
-      println(bbsName.text().slice(0,matcher.start()))
-    }
+    val bbsName = doc.select("#a_bbsname").text().split(" ")(0)
+    println(bbsName)
+    println(bbsName.substring(0, bbsName.length -2 ))
+
 
     val click = doc.select("#x-views")
     println(click.text())
     val replys = doc.select("#x-replys")
     println(replys.text())
-    val problem = doc.select("#consnav span").last()
+    val problem = doc.select("#consnav span")
     println(problem.text())
     println("\n\n\n")
 
@@ -53,16 +51,26 @@ class JsoupTest {
       println(b.select("[class=txtcenter fw]").text())//name
       println(b.select(".lv-txt").text()) //level
 
-      println(b.select("li:contains(精华)").text()) //精华
-      println(b.select("li:contains(帖子)").text()) //帖子
-      println(b.select("li:contains(注册)").text()) //register time
-      println(b.select("li:contains(来自)").text()) //area
-      println(b.select("li:contains(所属)").text()) //
-      println(b.select("li:contains(关注)").text().trim) //
-      println(b.select("li:contains(爱车)").text().trim) //
+      val jingHua = NumExtractUtil.getNumArray(b.select("li:contains(精华)").text())
+      if (jingHua.size==0) println("jinghua: " + jingHua(0)) //精华
+      val tieZi = NumExtractUtil.getNumArray(b.select("li:contains(帖子)").text())
+      if(tieZi.size == 2 ) {
+        println("帖子 " + tieZi(0)) //帖子
+        println("回复 " + tieZi(1)) //回复
+      }
+      println(b.select("li:contains(注册)").text().substring(3)) //register time
+      println(b.select("li:contains(来自)").text().substring(3)) //area
+      var temp = b.select("li:contains(所属)").text()
+      println(if(temp.length < 4)"" else temp.substring(3)) //
+      temp = b.select("li:contains(关注)").text().trim
+      if (temp.length > 4) println(temp.substring(4)) //
+      temp = b.select("li:contains(爱车)").text().trim
+      if (temp.length > 4)println(temp.substring(4)) //
+
       println(b.select("span[xname=date]").text().trim) // 发表时间
       println(b.select("a[class=rightbutlz fr], div[class=fr]").text())
-      println(b.select("div[class=plr26 rtopconnext] span:contains(来自) a").text) //手机客户端
+      val kehuduan = b.select("div[class=plr26 rtopconnext] span:contains(来自) a").text
+      if(NumExtractUtil.getStringArray(kehuduan).size > 0)println(NumExtractUtil.getStringArray(kehuduan)(0)) //手机客户端
 
       //设计评论部分
       println(b.select(".w740 .relyhfcon p a:contains(楼)").text())

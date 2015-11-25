@@ -62,8 +62,8 @@ object SparkManagerFactor {
       hBaseConf = HBaseConfiguration.create()
       hBaseConf.addResource("hbase-site.xml")
       hBaseConf.set(TableOutputFormat.OUTPUT_TABLE, tableName)
-//      val job = new Job(hBaseConf)
-      val job = Job.getInstance(hBaseConf, tableName)
+      val job = new Job(hBaseConf)
+//      val job = Job.getInstance(hBaseConf, tableName)
       job.setOutputFormatClass(classOf[TableOutputFormat[(ImmutableBytesWritable, Put)]])
       hadoopConf = job.getConfiguration
       hadoopConf

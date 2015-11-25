@@ -34,13 +34,16 @@ object Main{
     val sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
     println(s"=============#### program begins at: ${sdf.format(timeStart)} ###==============")
 
-    run(args)
+//    run(args)
+    testHBase()
 
     println("\ntime taken: " + (new Date().getTime - timeStart.getTime) / 1000 + " seconds\n\n")
     System.exit(0)
   }
 
-  def testHBase(sc: SparkContext, hadoopConf: Configuration): Unit = {
+  def testHBase(): Unit = {
+    val sc = SparkManagerFactor.getSparkContext(this.getClass.getName)
+    val hadoopConf = SparkManagerFactor.getHBaseHadoopConf("hh")
     val list = 1 to 1000
     val putRDD = sc.parallelize(list).map(num => {
       val put = new Put(Bytes.toBytes("000" + num))
@@ -48,6 +51,7 @@ object Main{
     }).map(put => (new ImmutableBytesWritable(put.getRow), put))
 
     putRDD.saveAsNewAPIHadoopDataset(hadoopConf)
+
   }
 
   def run(args: Array[String]): Unit ={
