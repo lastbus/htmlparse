@@ -28,10 +28,10 @@ class PCAuto {
     val doc = Jsoup.parse(html)
 
     val luntan = doc.select("#content .com-crumb a").text().split(" ")(3)
-    val view = doc.select("#views").text()
+    val view = doc.select(".overView").text()
     val replay = doc.select(".overView span").last().text()
-    val title = doc.select(".post_right .post_r_tit .yh")
-
+    val title = doc.select(".post_right .post_r_tit .yh").text()
+    println(luntan + ":" + view + " : " + replay + " : " + title )
     val lists = doc.select("#post_list .postids")
     val puts = new Array[Put](lists.size())
     for(list <- elements2List(lists)){

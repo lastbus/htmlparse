@@ -21,8 +21,11 @@ import scala.collection.mutable.ArrayBuffer
 trait Parser extends Serializable{
 
   def parse(rdd: RDD[(Text,Content)], urlSelectorMap: Map[Pattern, Selector]): RDD[(ImmutableBytesWritable ,Put)] ={
-    rdd.map{case (k, v) => parse((k.toString,v), urlSelectorMap)}.filter(_!= null).flatMap(put => put).
+    val r1 = rdd.map{case (k, v) => parse((k.toString, v), urlSelectorMap)}
+    println(r1.count)
+    val r2 = r1.filter(_!= null).flatMap(put => put).
       map(put => (new ImmutableBytesWritable(put.getRow), put))
+    r2
   }
 
   def run(content: Content, selector: Selector): Array[Put]
@@ -31,6 +34,7 @@ trait Parser extends Serializable{
     if(urlSelectorMap == null) return null
     val selector = filter(html._1, urlSelectorMap)
     if(selector == null) null else run(html._2, selector)
+//    if(temp(html._1)) run(html._2, new Selector()) else null
   }
 
   /**
@@ -40,6 +44,7 @@ trait Parser extends Serializable{
    */
   final def filter(url: String, urlSelectorMap: Map[Pattern, Selector]): Selector ={
     for((urlPattern, selector) <- urlSelectorMap){
+//      println(urlPattern.matcher(url).matches().toString + "==== " + url + "   " + urlPattern)
       if(urlPattern.matcher(url).matches()) return selector
     }
     null
@@ -58,4 +63,9 @@ trait Parser extends Serializable{
     arr.toArray
   }
 
+  private def temp(url: String): Boolean ={
+    patternTemp.matcher(url).matches()
+  }
+
+  val patternTemp = Pattern.compile("http://club.autohome.com.cn/bbs/thread.*")
 }

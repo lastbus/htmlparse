@@ -21,7 +21,7 @@ class BitAuto {
 
   val sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm")
   val sdf2 = new SimpleDateFormat("yyyyMMddHHmmss")
-  val pattern = Pattern.compile("��̳")
+  val pattern = Pattern.compile("")
 
   @Test
   def run = {
@@ -29,9 +29,10 @@ class BitAuto {
     val html = Jsoup.connect(url).get().toString
     val doc = Jsoup.parse(html)
     val title = doc.select("#TitleForumLink").text()
-    val topic = doc.select("TitleTopicSt").text()
+    val topic = doc.select("#TitleTopicSt").text()
+    println(topic)
     val clickAndReplay = doc.select("[class=title_box] span").text()
-
+    println(clickAndReplay)
     val list = doc.select(".postcontbox .postcont_list")
     val putsArray = new Array[Put](list.size)
     var i = 0
@@ -53,6 +54,7 @@ class BitAuto {
       val key = host + " " * (20 - host.length) + "|" + carType + " " * (8-carType.length) +
         "|" + time + "|" + url + "|" + contArray(8)
       println(key)
+      println(url.substring(url.indexOf(host) + host.length))
       val put = new Put(Bytes.toBytes(key))
       val ss = contArray.filter(_ != null)
       for(arr <- contArray if arr != null){

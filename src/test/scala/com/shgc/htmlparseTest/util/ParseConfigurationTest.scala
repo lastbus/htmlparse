@@ -60,6 +60,7 @@ class ParseConfigurationTest {
       if (url.matcher(url1).matches()) selector = select
     }
 
+    assert(selector != null)
     assertEquals("gb2312", selector.encoding)
     assertEquals("body #topic_detail_main #content #cont_main div[id^=maxwrap] div[id^=F", selector.body)
 

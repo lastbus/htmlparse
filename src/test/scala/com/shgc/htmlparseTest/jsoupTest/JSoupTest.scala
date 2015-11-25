@@ -25,7 +25,7 @@ class JsoupTest {
 
 
 
-//  @Test
+  @Test
   def main2: Unit ={
     val url = "http://club.autohome.com.cn/bbs/thread-c-3217-46839120-1.html"
     //    require(ParseConfiguration.readConf())
@@ -65,7 +65,7 @@ class JsoupTest {
       println(b.select("div[class=plr26 rtopconnext] span:contains(来自) a").text) //手机客户端
 
       //设计评论部分
-      print(b.select(".w740 .relyhfcon p a:contains(楼)").text())
+      println(b.select(".w740 .relyhfcon p a:contains(楼)").text())
       println(b.select(".w740 .rrlycontxt").text())
       println(b.select(".w740 .yy_reply_cont").text())
 
