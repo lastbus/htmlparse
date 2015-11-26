@@ -2,7 +2,7 @@ package com.shgc.htmlparseTest.util
 
 import java.util.regex.Pattern
 
-import com.shgc.htmlparse.util.NumExtractUtil
+import com.shgc.htmlparse.util.{TimeUtil, NumExtractUtil}
 import org.junit.Test
 
 import scala.collection.mutable.ArrayBuffer
@@ -60,15 +60,29 @@ class RegexTest {
 
   }
 
-  @Test
+//  @Test
   def extractNum = {
     val jhj = "精华; 90贴| 80 回复| 1000 查看"
     val aa = "卡积分户籍卡健康的房间打开"
     val array = NumExtractUtil.getNumArray(aa)
     if(array.size >0) for(a <-array)println(a) else println("No number found")
 
+  }
 
+//  @Test
+  def run2 = {
+    val s = "8 (0精华)"
+    for(a<- NumExtractUtil.getNumArray(s))println(a)
+  }
+
+//  @Test
+  def run3 ={
+    val t = "很低： jksdfjkd 112014-07-09"
+        println(TimeUtil.getBitAutoTime(t))
 
   }
+
+
+
 
 }

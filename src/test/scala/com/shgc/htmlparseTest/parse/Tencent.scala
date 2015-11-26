@@ -2,6 +2,7 @@ package com.shgc.htmlparseTest.parse
 
 import java.text.SimpleDateFormat
 
+import com.shgc.htmlparse.util.{NumExtractUtil, FloorUtil, TimeUtil}
 import org.apache.hadoop.hbase.client.Put
 import org.apache.hadoop.hbase.util.Bytes
 import org.jsoup.Jsoup
@@ -27,12 +28,15 @@ class Tencent {
 //    println(html)
     val doc = Jsoup.parse(html)
 
+    var temp: String = null
+
     val luntan = doc.select("body #wp #pt div.z a:eq(8)").text()
     val problem = doc.select("body #wp #pt div.z a:last-child").text()
     val clickAndView = doc.select("#postlist table:first-child td:eq(0) span.xi1").text()
     println("luntan: " + luntan)
     println("problem: " + problem)
-    println("replay: " + clickAndView.split(" ")(1) + " view: " + clickAndView.split(" ")(0))
+    println("replay: " + NumExtractUtil.getNumArray(clickAndView)(1) + " view: " +
+      NumExtractUtil.getNumArray(clickAndView)(0))
 
     val lists = doc.select("#postlist > div[id^=post_]")
     val putsArray = new Array[Put](lists.size())
@@ -40,20 +44,32 @@ class Tencent {
     var i = 0
     for(list <- elements2List(lists)){
       val arr = new Array[(String, String, String)](15)
-      arr(0) = ("comments", "username", list.select("table tbody tr:eq(0) td:eq(0) div.pi div.authi a.xw1").text())
-      arr(1) = ("comments", "zhu-ti", list.select("table tbody tr:eq(0) td:eq(0) table th:eq(0) a").text())
-      arr(2) = ("comments", "friends", list.select("table tbody tr:eq(0) td:eq(0) table th:eq(1) a").text())
+      temp = list.select("table tbody tr:eq(0) td:eq(0) div.pi div.authi a.xw1").text().trim
+      arr(0) = if(temp != null && temp.length > 0) ("comments", "username", temp) else null
+      temp = list.select("table tbody tr:eq(0) td:eq(0) table th:eq(0) a").text().trim
 
-      arr(3) = ("comments", "ji-fen", list.select("table tbody tr:eq(0) td:eq(0) table td a").text())
-      arr(4) = ("comments", "level", list.select("table tbody tr:eq(0) td:eq(0) > div > p em a").text())
+      arr(1) = if(temp != null && temp.length > 0) ("comments", "tie-zi-publish", temp) else null
+      temp = list.select("table tbody tr:eq(0) td:eq(0) table th:eq(1) a").text().trim
+      arr(2) = if(temp != null && temp.length > 0) ("comments", "friends", temp) else null
 
-      arr(5) = ("comments", "jin-qian", list.select("table tbody tr:eq(0) td:eq(0) > dl > dd:eq(1)").text())
-      arr(6) = ("comments", "ji-fen", list.select("table tbody tr:eq(0) td:eq(0) > dl > dd:eq(3)").text())
-      arr(7) = ("comments", "last-login", list.select("table tbody tr:eq(0) td:eq(0) > dl > dd:eq(5)").text())
+      temp = list.select("table tbody tr:eq(0) td:eq(0) table td a").text().trim
+      arr(3) = if(temp != null && temp.length > 0) ("comments", "ji-fen", temp) else null
+      temp = list.select("table tbody tr:eq(0) td:eq(0) > div > p em a").text().trim
+      arr(4) = if(temp != null && temp.length > 0) ("comments", "level", temp) else null
 
-      arr(8) = ("comments", "time", list.select("table tbody tr:eq(0) td:eq(1) div.pti div.authi em").text())
-      arr(9) = ("comments", "floor", list.select("table tbody tr:eq(0) td:eq(1) div.pi > strong em").text())
-      arr(10) = ("comments", "comment", list.select("table tbody tr:eq(0) td:eq(1) div.pct table").text())
+      temp = list.select("table tbody tr:eq(0) td:eq(0) > dl > dd:eq(1)").text().trim
+      arr(5) = if(temp != null && temp.length > 0) ("comments", "jin-qian", temp) else null
+      temp = list.select("table tbody tr:eq(0) td:eq(0) > dl > dd:eq(3)").text().trim
+      arr(6) = if(temp != null && temp.length > 0) ("comments", "ji-fen", temp) else null
+      temp = list.select("table tbody tr:eq(0) td:eq(0) > dl > dd:eq(5)").text().trim
+      arr(7) = if(temp != null && temp.length > 0) ("comments", "last-login", TimeUtil.getBitAutoTime(temp)) else null
+
+      temp = list.select("table tbody tr:eq(0) td:eq(1) div.pti div.authi em").text().trim
+      arr(8) = if(temp != null && temp.length > 0) ("comments", "time", TimeUtil.getPostTime(temp)) else null
+      temp = list.select("table tbody tr:eq(0) td:eq(1) div.pi > strong em").text().trim
+      arr(9) = if(temp != null && temp.length > 0) ("comments", "floor", FloorUtil.getFloorNumber(temp, 1)) else null
+      temp = list.select("table tbody tr:eq(0) td:eq(1) div.pct table").text().trim
+      arr(10) = if(temp != null && temp.length > 0) ("comments", "comment", temp) else null
 
 
       //1正常发言  2 回复上面楼层
@@ -67,9 +83,9 @@ class Tencent {
 
       val carType = luntan
       println(arr(8))
-      val time = getTime(arr(8)._3)
+      val time = arr(8)._3
 
-      val key = "qq" + " " * 6 +  "|" + carType + "空" * (8 - carType.length) + "|" + time +
+      val key = "tencent" + " " +  "|" + carType + "#" * (8 - carType.length) + "|" + time +
         "|" + url  +"|" + arr(9)._3
       println(key)
       val put = new Put(Bytes.toBytes(key))

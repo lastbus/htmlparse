@@ -4,7 +4,7 @@ import java.net.URL
 import java.text.SimpleDateFormat
 import java.util.regex.Pattern
 
-import com.shgc.htmlparse.util.{NumExtractUtil, Selector}
+import com.shgc.htmlparse.util.{TimeUtil, NumExtractUtil, Selector}
 import org.apache.hadoop.hbase.client.Put
 import org.apache.hadoop.hbase.util.Bytes
 import org.apache.log4j.LogManager
@@ -104,13 +104,16 @@ class AutoHomeParser extends Parser {
       val html = new String(content.getContent, "gb2312")
       val url = content.getUrl
       val doc = Jsoup.parse(html)
-      val bbsName = doc.select("#a_bbsname").text().split(" ")(0)
-      val carType = bbsName.substring(0, bbsName.length - 2)
 
-      val click = doc.select("#x-views").text()
-      val replay = doc.select("#x-replys").text()
-      val problem = doc.select("#consnav span")
+      var temp: String = null
+      temp = doc.select("#a_bbsname").text().split(" ")(0)
+      val carType = if(temp != null && temp.length > 2) temp.substring(0, temp.length - 2) else null
+      temp = doc.select("#x-views").text()
+      val click = if(temp != null  && temp.length > 0) temp else null
+      temp = doc.select("#x-replys").text()
+      val replay = if(temp != null  && temp.length > 0) temp else null
       //帖名
+      val problem = doc.select("#consnav span")
       val topic = if(problem != null && problem.size > 0 ) problem.last().text() else null
 
       val body = doc.select("body #topic_detail_main #content #cont_main div[id^=maxwrap] div[id^=F]")
@@ -118,35 +121,51 @@ class AutoHomeParser extends Parser {
       var i = 0
       for (b <- elements2List(body)) {
         val arr = new Array[(String, String, String)](16)
-        arr(0) = ("comments", "username", b.select("[class=txtcenter fw]").text().trim) //name
-        arr(1) = ("comments", "level", b.select(".lv-txt").text().trim) //level
-        val jingHua = NumExtractUtil.getNumArray(b.select("li:contains(精华)").text())
-        if (jingHua.size == 0) arr(2) = ("comments", "jing-hua", jingHua(0))  //精华
 
+        temp = b.select("[class=txtcenter fw]").text().trim
+        arr(0) = if (temp != null && temp.length > 0) ("comments", "username", temp) else null  //username
+        temp = b.select(".lv-txt").text().trim
+        arr(1) = if (temp != null && temp.length > 0) ("comments", "level",temp ) else null  //level
+
+        val jingHua = NumExtractUtil.getNumArray(b.select("li:contains(精华)").text())
+        if (jingHua != null && jingHua.size == 0) arr(2) = ("comments", "jinghua", jingHua(0))  //精华
         val tieZi = NumExtractUtil.getNumArray(b.select("li:contains(帖子)").text())
         if(tieZi.size == 2 ) {
-          arr(3) = ("comments", "post-publish", tieZi(0)) //发布帖子数
-          arr(16) = ("comments", "post-replay", tieZi(1)) //回复帖子数
+          arr(3) = ("comments", "publish", tieZi(0)) //发布帖子数
+          arr(16) = ("comments", "response", tieZi(1)) //回复帖子数
         }
 
-        arr(4) = ("comments", "register-time", b.select("li:contains(注册)").text()) //register time
-        arr(5) = ("comments", "area", b.select("li:contains(来自)").text()) //area
-        arr(6) = ("comments", "suo-shu", b.select("li:contains(所属)").text()) //
-        arr(7) = ("comments", "guan-zhu", b.select("li:contains(关注)").text().trim) //
-        arr(8) = ("comments", "ai-che", b.select("li:contains(爱车)").text().trim) //
-        arr(9) = ("comments", "time", b.select("span[xname=date]").text().trim) // 发表时间
-        arr(10) = ("comments", "floor", b.select("a[class=rightbutlz fr], div[class=fr]").text())
-        arr(11) = ("comments", "ke-hu-duan", b.select("div[class=plr26 rtopconnext] span:contains(来自) a").text) //手机客户端
+        temp = b.select("li:contains(注册)").text().trim
+        arr(4) =  if(temp != null && temp.length > 0) ("comments", "registertime", TimeUtil.getAutoHomeRT(temp)) else null//register time
+        temp = b.select("li:contains(来自)").text().trim
+        arr(5) = if(temp != null && temp.length > 3) ("comments", "area", temp.substring(3)) else null
+        temp = b.select("li:contains(所属)").text().trim
+        arr(6) = if(temp != null && temp.length > 3) ("comments", "suoshu", temp.substring(3)) else null
+        temp = b.select("li:contains(关注)").text().trim
+        arr(7) = if(temp != null && temp.length > 3) ("comments", "guanzhu", temp.substring(3)) else null
+        temp = b.select("li:contains(爱车)").text().trim
+        arr(8) = if(temp != null && temp.length > 3) ("comments", "aiche", temp.substring(3)) else null
+        temp = b.select("span[xname=date]").text().trim
+        arr(9) = if(temp != null && temp.length > 6) ("comments", "posttime", TimeUtil.getFloorTime1(temp)) else null
+        temp = b.select("a[class=rightbutlz fr], div[class=fr]").text().trim
+        arr(10) = if(temp != null && temp.length > 3) ("comments", "floor", temp.substring(0, temp.length -1)) else null
+        temp = b.select("div[class=plr26 rtopconnext] span:contains(来自) a").text.trim
+        arr(11) = if(temp != null && temp.length > 0) ("comments", "clientside", temp) else null //手机客户端
         //设计评论部分
         if (b.select(".w740 .relyhfcon p a:contains(楼)") != null) {
-          arr(12) = ("comments", "floor2", b.select(".w740 .relyhfcon p a:contains(楼)").text())
-          arr(13) = ("comments", "comment2", b.select(".w740 .rrlycontxt").text())
-          arr(14) = ("comments", "comment", b.select(".w740 .yy_reply_cont").text())
+          temp = b.select(".w740 .relyhfcon p a:contains(楼)").text().trim
+          arr(12) = if(temp != null && temp.length > 0) ("comments", "floor2", temp.substring(0, temp.length - 1)) else null
+          temp = b.select(".w740 .rrlycontxt").text().trim
+          arr(13) = if(temp != null && temp.length > 0) ("comments", "comment2", temp) else null
+          temp =  b.select(".w740 .yy_reply_cont").text().trim
+          arr(14) = if(temp != null && temp.length > 0) ("comments", "comment", temp) else null
         } else {
-          arr(15) = ("comments", "comment", b.select(".w740").text())
+          temp = b.select(".w740").text().trim
+          arr(15) = if(temp != null && temp.length > 0) ("comments", "comment", temp) else  null
         }
-        val key = "autohome" + " " * 8 + "|" + carType + "#" * (8 - carType.length) + "|" +
-          sdf2.format(sdf.parse(arr(9)._3)) + "|" + url + "|" + arr(10)._3
+
+        val key = "autohome"  + "|" + carType + "#" * (8 - carType.length) + "|" +
+          arr(9)._3 + "|" + url + "|" + arr(10)._3
 
         val put = new Put((Bytes.toBytes(key)))
 
@@ -164,11 +183,9 @@ class AutoHomeParser extends Parser {
 
      return putsArray
     }catch {
-      case _ :Exception => return null
+      case _ :Exception => { LOG.error("exception: " + content.getUrl);return null}
     }
-  }
 
-  val sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm")
-  val sdf2 = new SimpleDateFormat("yyyyMMddHHmmss")
+  }
 
 }

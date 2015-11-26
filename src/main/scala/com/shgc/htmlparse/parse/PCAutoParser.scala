@@ -3,7 +3,7 @@ package com.shgc.htmlparse.parse
 import java.net.URL
 import java.text.SimpleDateFormat
 
-import com.shgc.htmlparse.util.Selector
+import com.shgc.htmlparse.util.{FloorUtil, TimeUtil, NumExtractUtil, Selector}
 import org.apache.hadoop.hbase.client.Put
 import org.apache.hadoop.hbase.util.Bytes
 import org.apache.nutch.protocol.Content
@@ -16,6 +16,7 @@ class PCAutoParser extends Parser {
   val sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm")
   val sdf2 = new SimpleDateFormat("yyyyMMddHHmmss")
 
+
   override def run(content: Content, selector: Selector): Array[Put] = {
 
     try {
@@ -25,9 +26,10 @@ class PCAutoParser extends Parser {
       val host = new URL(url).getHost
       val doc = Jsoup.parse(html)
 
-      val luntan = doc.select("#content .com-crumb a").text().split(" ")(3)
+      var temp: String = null
+      val luntan = doc.select("#content .com-crumb a:eq(6)").text()
       val view = doc.select("#views").text() // kan bu dao
-      val replay = doc.select(".overView span").last().text()
+      val reply = doc.select(".overView span").last().text()
       val title = doc.select(".post_right .post_r_tit .yh").text()
 
 
@@ -36,25 +38,29 @@ class PCAutoParser extends Parser {
       var i = 0
       for (list <- elements2List(lists)) {
         val arr = new Array[(String, String, String)](10)
-        arr(0) = ("comments", "username", list.select("a.needonline").text())
-        arr(1) = ("comments", "fans", list.select(".user_atten li:eq(0)").text())
-        arr(2) = ("comments", "jinghua", list.select(".user_atten li:eq(1)").text())
-        arr(3) = ("comments", "tiezi", list.select(".user_atten li:eq(2)").text())
-        arr(4) = ("comments", "time", list.select(".post_time").text())
-        arr(5) = ("comments", "comment", list.select(".post_msg").text())
-        arr(6) = ("comments", "floor", list.select(".post_floor").text())
-        //      ("comments", "", list.select("").text())
-        //      ("comments", "", list.select("").text())
+        temp = list.select("a.needonline").text().trim
+        arr(0) = if(temp != null && temp.length > 0)  ("comments", "username", temp) else null
+        temp = list.select(".user_atten li:eq(0)").text().trim
+        arr(1) = if(temp != null && temp.length > 0) ("comments", "fans", NumExtractUtil.getNumArray(temp)(0)) else null
+        temp = list.select(".user_atten li:eq(1)").text().trim
+        arr(2) = if(temp != null && temp.length > 0) ("comments", "jinghua", NumExtractUtil.getNumArray(temp)(0)) else null
+        temp = list.select(".user_atten li:eq(2)").text().trim
+        arr(3) = if(temp != null && temp.length > 0) ("comments", "publish", NumExtractUtil.getNumArray(temp)(0)) else null
+        temp = list.select(".post_time").text().trim
+        arr(4) = if(temp != null && temp.length > 0) ("comments", "posttime",TimeUtil.getPostTime(temp) ) else null
+        temp = list.select(".post_msg").text().trim
+        arr(5) = if(temp != null && temp.length > 0) ("comments", "comment", temp) else null
+        temp = list.select(".post_floor em, .post_floor").text().trim
+        arr(6) = if(temp != null && temp.length > 0) ("comments", "floor", FloorUtil.getFloorNumber(temp, 1)) else null  //从 1 开始
 
-        val host = new URL(url).getHost
         val time = sdf2.format(sdf.parse(arr(4)._3.substring(3)))
-        val key = host + " " * (20 - host.size) + "|" + luntan.substring(0, luntan.length - 2) + "|" + time + "|" + url + "|" + arr(6)._3
+        val key = "pcauto" + " " * 2 + "|" + luntan.substring(0, luntan.length - 2) + "|" + time + "|" + url + "|" + arr(6)._3
         println(key)
 
         val put = new Put(Bytes.toBytes(key))
-        if (title != null) put.addColumn(Bytes.toBytes("comments"), Bytes.toBytes("topic"), Bytes.toBytes(title))
-        if (view != null) put.addColumn(Bytes.toBytes("comments"), Bytes.toBytes("topic"), Bytes.toBytes(view))
-        if (replay != null) put.addColumn(Bytes.toBytes("comments"), Bytes.toBytes("topic"), Bytes.toBytes(replay))
+        if (title != null && title.length > 0) put.addColumn(Bytes.toBytes("comments"), Bytes.toBytes("topic"), Bytes.toBytes(title))
+        if (view != null && view.length > 0) put.addColumn(Bytes.toBytes("comments"), Bytes.toBytes("view"), Bytes.toBytes(view))
+        if (reply != null && reply.length > 0) put.addColumn(Bytes.toBytes("comments"), Bytes.toBytes("reply"), Bytes.toBytes(reply))
 
         for (c <- arr if c != null && c._3 != null) {
           put.addColumn(Bytes.toBytes(c._1), Bytes.toBytes(c._2), Bytes.toBytes(c._3))

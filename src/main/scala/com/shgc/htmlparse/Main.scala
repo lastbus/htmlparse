@@ -18,6 +18,7 @@ import org.apache.log4j.LogManager
 import org.apache.nutch.protocol.Content
 import com.shgc.htmlparse.parse.Parser
 import org.apache.spark.SparkContext
+import org.apache.spark.rdd.{PairRDDFunctions, RDD}
 
 import scala.xml.XML
 
@@ -34,8 +35,8 @@ object Main{
     val sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
     println(s"=============#### program begins at: ${sdf.format(timeStart)} ###==============")
 
-//    run(args)
-    testHBase()
+    run(args)
+//    testHBase()
 
     println("\ntime taken: " + (new Date().getTime - timeStart.getTime) / 1000 + " seconds\n\n")
     System.exit(0)
@@ -45,12 +46,14 @@ object Main{
     val sc = SparkManagerFactor.getSparkContext(this.getClass.getName)
     val hadoopConf = SparkManagerFactor.getHBaseHadoopConf("hh")
     val list = 1 to 1000
-    val putRDD = sc.parallelize(list).map(num => {
+    val putRDD: RDD[(ImmutableBytesWritable, Put)] = sc.parallelize(list).map(num => {
       val put = new Put(Bytes.toBytes("000" + num))
       put.addColumn(Bytes.toBytes("comments"), Bytes.toBytes("test"), Bytes.toBytes(num))
     }).map(put => (new ImmutableBytesWritable(put.getRow), put))
 
-    putRDD.saveAsNewAPIHadoopDataset(hadoopConf)
+    val putt = new PairRDDFunctions[ImmutableBytesWritable, Put](putRDD)
+    putt.saveAsNewAPIHadoopDataset(hadoopConf)
+//    putRDD.saveAsNewAPIHadoopDataset(hadoopConf)
 
   }
 

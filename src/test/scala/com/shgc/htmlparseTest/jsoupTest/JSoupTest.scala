@@ -70,7 +70,7 @@ class JsoupTest {
       println(b.select("span[xname=date]").text().trim) // 发表时间
       println(b.select("a[class=rightbutlz fr], div[class=fr]").text())
       val kehuduan = b.select("div[class=plr26 rtopconnext] span:contains(来自) a").text
-      if(NumExtractUtil.getStringArray(kehuduan).size > 0)println(NumExtractUtil.getStringArray(kehuduan)(0)) //手机客户端
+      if(NumExtractUtil.getStringArray(kehuduan).size > 0)println(kehuduan) //手机客户端
 
       //设计评论部分
       println(b.select(".w740 .relyhfcon p a:contains(楼)").text())

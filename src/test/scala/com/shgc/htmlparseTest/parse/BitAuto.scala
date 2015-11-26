@@ -4,6 +4,7 @@ import java.net.URL
 import java.text.SimpleDateFormat
 import java.util.regex.Pattern
 
+import com.shgc.htmlparse.util.{FloorUtil, TimeUtil, NumExtractUtil}
 import org.apache.hadoop.hbase.client.Put
 import org.apache.hadoop.hbase.util.Bytes
 import org.jsoup.Jsoup
@@ -28,38 +29,58 @@ class BitAuto {
     val url = "http://baa.bitauto.com/changanv5/thread-7626972.html"
     val html = Jsoup.connect(url).get().toString
     val doc = Jsoup.parse(html)
+    var temp: String = null
     val title = doc.select("#TitleForumLink").text()
     val topic = doc.select("#TitleTopicSt").text()
     println(topic)
-    val clickAndReplay = doc.select("[class=title_box] span").text()
+    val clickAndReplay = doc.select("[class=title_box] span").text().trim
     println(clickAndReplay)
     val list = doc.select(".postcontbox .postcont_list")
     val putsArray = new Array[Put](list.size)
     var i = 0
     for(t <- elements2List(list) if t.select("[span:contains(已禁用)]") != null ){
 
-      val contArray = new Array[(String, String, String)](10)
-      contArray(0) = ("comments", "username", t.select("[class=user_name]").text())
-      contArray(1) = ("comments", "level", t.select("li:contains(等)").text())
-      contArray(2) = ("comments", "tiezi", t.select("li:contains(帖)").text())
-      contArray(3) = ("comments", "area", t.select("li:contains(地)").text())
-      contArray(4) = ("comments", "car", t.select("li:contains(车)").text())
-      contArray(5) = ("comments", "registerTime", t.select("li:contains(册)").text())
-      contArray(6) = ("comments", "time", t.select("span[role=postTime]").text()) //�
-      contArray(7) = ("comments", "comment", t.select("div[class=post_width]").text()) //����
-      contArray(8) = ("comments", "floor", t.select("div[class=floor_box]").text()) //
-      val host = new URL(url).getHost
+      val contArray = new Array[(String, String, String)](15)
+      temp = t.select("[class=user_name]").text().trim
+      contArray(0) = if(temp != null && temp.length > 0) ("comments", "username", temp) else null
+      temp = t.select("li:contains(等)").text().trim
+      contArray(1) = if(temp != null && temp.contains("：")) ("comments", "level", temp.substring(temp.indexOf("：") + 1).trim) else null
+      temp = t.select("li:contains(帖)").text().trim
+      if(temp != null && temp.contains("精华")){
+        val result = NumExtractUtil.getNumArray(temp)
+        if(result.size == 2){
+          contArray(2) =  ("comments", "tiezi", result(0))
+          contArray(3) = ("comments", "jing-hua", result(1))
+        }
+      }
+      temp = t.select("li:contains(地)").text().trim
+      contArray(9) = if(temp != null && temp.contains("：")) ("comments", "area",temp.substring(temp.indexOf("：") + 1).trim) else null
+      temp = t.select("li:contains(车)").text().trim
+      contArray(4) = if(temp != null && temp.contains("：")) ("comments", "car", temp.substring(temp.indexOf("：") + 1).trim) else null
+      temp = t.select("li:contains(册)").text().trim
+      contArray(5) = if(temp != null && temp.length > 0) ("comments", "registerTime", TimeUtil.getBitAutoTime(temp)) else null
+      temp = t.select("span[role=postTime]").text().trim
+      contArray(6) = if(temp != null && temp.length > 0) ("comments", "post-time", TimeUtil.getPostTime(temp)) else null
+      temp = t.select("div[class=post_width]").text().trim
+      contArray(7) = if(temp != null && temp.length > 0) ("comments", "comment", temp) else null
+      temp = t.select("div[class=floor_box]").text().trim
+      contArray(8) = if(temp != null && temp.length > 0) ("comments", "floor", FloorUtil.getFloorNumber(temp)) else null
+
       val carType = title.substring(0, title.length - 2)
-      val time = getTime(contArray(6)._3)
-      val key = host + " " * (20 - host.length) + "|" + carType + " " * (8-carType.length) +
-        "|" + time + "|" + url + "|" + contArray(8)
+      val time = contArray(6)._3
+      val key = "bitauto" + " " + "|" + carType + "#" * (8-carType.length) +
+        "|" + time + "|" + url + "|" + contArray(8)._3
       println(key)
-      println(url.substring(url.indexOf(host) + host.length))
+
       val put = new Put(Bytes.toBytes(key))
-      val ss = contArray.filter(_ != null)
+      if(clickAndReplay != null) {
+        val t = NumExtractUtil.getNumArray(clickAndReplay)
+        put.addColumn(Bytes.toBytes("comment"), Bytes.toBytes("replay"), Bytes.toBytes(t(0)))
+        put.addColumn(Bytes.toBytes("comment"), Bytes.toBytes("view"), Bytes.toBytes(t(1)))
+      }
       for(arr <- contArray if arr != null){
         put.addColumn(Bytes.toBytes(arr._1), Bytes.toBytes(arr._2), Bytes.toBytes(arr._3))
-        println(arr._3)
+        println(arr)
       }
       putsArray(i)= put
       i += 1

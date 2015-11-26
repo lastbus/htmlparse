@@ -10,6 +10,7 @@ import scala.collection.mutable.ArrayBuffer
 object NumExtractUtil {
   val pattern = Pattern.compile("\\d+")
   val stringPattern = Pattern.compile("[a-zA-z]+")
+  val bitAutoPattern = Pattern.compile("^\\d+ [(（]\\d+精华[)）]")
 
   def getNumArray(s: String): Array[String] = {
     val matcher = pattern.matcher(s)
@@ -28,6 +29,16 @@ object NumExtractUtil {
       stringArrayBuffer += matcher.group()
     }
     stringArrayBuffer.toArray
+  }
+
+  def getTieAndJingHua(s: String): Array[String] ={
+    if(s == null) return null
+    val matcher = bitAutoPattern.matcher(s)
+    val arrayBuffer = new ArrayBuffer[String]
+    if(matcher.find()){
+      arrayBuffer += matcher.group()
+    }
+    arrayBuffer.toArray
   }
 
 }
