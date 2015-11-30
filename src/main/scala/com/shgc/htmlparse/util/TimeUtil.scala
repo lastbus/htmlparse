@@ -13,9 +13,9 @@ object TimeUtil {
   val sdf3 = new SimpleDateFormat("yyyy年MM月dd日")
   val sdf33 = new SimpleDateFormat("yyyy-MM-dd")
   val sdf4 = new SimpleDateFormat("yyyyMMdd")
-  val autoHomeTimePattern = Pattern.compile("\\d+年\\d+月\\d+日")
+  val autoHomeTimePattern = Pattern.compile("\\d{2,4}年\\d{1,2}月\\d{1,2}日")
   val bitAuto = Pattern.compile("\\d{2,4}-\\d{1,2}-\\d{1,2}")
-  val postTimePattern = Pattern.compile("\\d{2,4}-\\d{1,2}-\\d{1,2} \\d{1,2}:\\d{1,2}(:\\d{1,2})?")
+  val postTimePattern = Pattern.compile("[0-9]{2,4}[--]\\d{1,2}[--]\\d{1,2}[ ]+\\d{1,2}[:：]\\d{1,2}([:：]\\d{1,2})?")
 
   def getAutoHomeRT(s: String): String ={
     if(s == null) return null

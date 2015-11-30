@@ -28,11 +28,11 @@ class SoHu {
     var temp: String = null
 
     val luntan = doc.select("body .wapper980 .conmain .con-head h1 a").text()
-    val problem = doc.select("body .wapper980 .conmain .con-head h1").text()
+    val problem = doc.select("body .wapper980 .conmain .con-head h1").text().trim.split(" ")
     val clickAndView = doc.select("body .wapper980 .conmain .con-head span.con-head-info").text()
     println("luntan: " + luntan.substring(0, luntan.length - 3))
-    println("problem: " + problem.split(">")(1))
-    println("replay: " + clickAndView.split("/")(0).substring(1) + " view: " + clickAndView.split("/")(1).substring(1))
+    println("problem: " + problem(problem.size - 1))
+    println("reply: " + clickAndView.split("/")(0).substring(1) + " view: " + clickAndView.split("/")(1).substring(1))
 
     val lists = doc.select("body div.wapper980 div.conmain div.con-wrap[id^=floor-]")
     val putsArray = new Array[Put](lists.size())
@@ -95,5 +95,14 @@ class SoHu {
   def getTime(timeString: String): String ={
     sdf2.format(sdf.parse(timeString))
   }
+
+  /*
+
+  问题记录
+  1 topic 把论坛名字也加上了；已解决， 原因：SoHuParse里没有按照这里的写
+  2 只有 view 字段，没有reply字段(已解决) 原因：if 后面两条语句忘了加在{} 中。
+
+
+   */
 
 }

@@ -19,16 +19,11 @@ import scala.collection.mutable.ArrayBuffer
  */
 class BitAutoParser extends Parser{
 
-  val sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm")
-  val sdf2 = new SimpleDateFormat("yyyyMMddHHmmss")
-  val pattern = Pattern.compile("")
 
   override def run(content: Content, selector: Selector): Array[Put] = {
-    try {
+//    try {
       val html = new String(content.getContent, "utf-8")
       val url = content.getUrl
-      val baseUrl = content.getBaseUrl
-      val host = new URL(url).getHost
       val doc = Jsoup.parse(html)
       var temp: String = null
       temp = doc.select("#TitleForumLink").text().trim
@@ -82,23 +77,15 @@ class BitAutoParser extends Parser{
 
         for (arr <- contArray if arr != null) {
           put.addColumn(Bytes.toBytes(arr._1), Bytes.toBytes(arr._2), Bytes.toBytes(arr._3))
-          println(arr._3)
         }
         putsArray(i) = put
         i += 1
       }
       return putsArray
-    }catch {
-      case _ :Exception => return null
-    }
+//    }catch {
+//      case _ :Exception => return null
+//    }
   }
 
-  def getTime(timeString: String): String ={
-    try{
-      sdf2.format(sdf.parse(timeString))
-    }catch {
-      case _ : Exception  => sdf2.format(sdf.parse(timeString.substring(3)))
-    }
-  }
 
 }

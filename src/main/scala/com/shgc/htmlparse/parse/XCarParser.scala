@@ -15,16 +15,10 @@ import org.jsoup.Jsoup
  */
 class XCarParser extends Parser {
 
-  val sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm")
-  val sdf2 = new SimpleDateFormat("yyyyMMddHHmmss")
-  val timePattern = Pattern.compile("\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}")
-
   override def run(content: Content, selector: Selector): Array[Put] = {
-    try{
+//    try{
     val html = new String(content.getContent, "gb2312")
     val url = content.getUrl
-    val baseUrl = content.getBaseUrl
-    val host = new URL(url).getHost
     val doc = Jsoup.parse(html)
     var temp: String = null
 
@@ -82,20 +76,9 @@ class XCarParser extends Parser {
       i += 1
     }
     return putsArray
-    }catch {
-      case _ :Exception => return null
-    }
+//    }catch {
+//      case _ :Exception => return null
+//    }
 
   }
-
-
-  def getTime(s: String): String ={
-    val matcher = timePattern.matcher(s)
-    var time: String = null
-    if(matcher.find()){
-      time = s.substring(matcher.start(), matcher.end())
-    }
-    time
-  }
-
 }

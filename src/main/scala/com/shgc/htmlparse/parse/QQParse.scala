@@ -13,9 +13,6 @@ import org.jsoup.Jsoup
  */
 class QQParse extends Parser{
 
-  val sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
-  val sdf2 = new SimpleDateFormat("yyyyMMddHHmmss")
-
   override def run(content: Content, selector: Selector): Array[Put] = {
 
     val url = content.getUrl
@@ -23,7 +20,7 @@ class QQParse extends Parser{
     val doc = Jsoup.parse(html)
     var temp: String = null
 
-    try {
+//    try {
       val luntan = doc.select("body #wp #pt div.z a:eq(8)").text().trim
       val problem = doc.select("body #wp #pt div.z a:last-child").text().trim
       val clickAndView = doc.select("#postlist table:first-child td:eq(0) span.xi1").text().trim
@@ -32,7 +29,7 @@ class QQParse extends Parser{
       val putsArray = new Array[Put](lists.size())
       var i = 0
       for (list <- elements2List(lists)) {
-        val arr = new Array[(String, String, String)](15)
+        val arr = new Array[(String, String, String)](11)
         temp = list.select("table tbody tr:eq(0) td:eq(0) div.pi div.authi a.xw1").text().trim
         arr(0) = if(temp != null && temp.length > 0) ("comments", "username", temp) else null
         temp = list.select("table tbody tr:eq(0) td:eq(0) table th:eq(0) a").text().trim
@@ -89,9 +86,9 @@ class QQParse extends Parser{
         i += 1
       }
       return putsArray
-    }catch {
-      case _ : Exception => return null
-    }
+//    }catch {
+//      case _ : Exception => return null
+//    }
   }
 
 

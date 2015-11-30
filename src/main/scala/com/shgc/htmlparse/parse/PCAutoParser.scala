@@ -13,8 +13,6 @@ import org.jsoup.Jsoup
  * Created by Administrator on 2015/11/24.
  */
 class PCAutoParser extends Parser {
-  val sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm")
-  val sdf2 = new SimpleDateFormat("yyyyMMddHHmmss")
 
 
   override def run(content: Content, selector: Selector): Array[Put] = {
@@ -22,8 +20,6 @@ class PCAutoParser extends Parser {
     try {
       val html = new String(content.getContent, "gb2312")
       val url = content.getUrl
-      val baseUrl = content.getBaseUrl
-      val host = new URL(url).getHost
       val doc = Jsoup.parse(html)
 
       var temp: String = null
@@ -37,7 +33,7 @@ class PCAutoParser extends Parser {
       val puts = new Array[Put](lists.size())
       var i = 0
       for (list <- elements2List(lists)) {
-        val arr = new Array[(String, String, String)](10)
+        val arr = new Array[(String, String, String)](7)
         temp = list.select("a.needonline").text().trim
         arr(0) = if(temp != null && temp.length > 0)  ("comments", "username", temp) else null
         temp = list.select(".user_atten li:eq(0)").text().trim
@@ -53,9 +49,8 @@ class PCAutoParser extends Parser {
         temp = list.select(".post_floor em, .post_floor").text().trim
         arr(6) = if(temp != null && temp.length > 0) ("comments", "floor", FloorUtil.getFloorNumber(temp, 1)) else null  //从 1 开始
 
-        val time = sdf2.format(sdf.parse(arr(4)._3.substring(3)))
+        val time = arr(4)._3
         val key = "pcauto" + " " * 2 + "|" + luntan.substring(0, luntan.length - 2) + "|" + time + "|" + url + "|" + arr(6)._3
-        println(key)
 
         val put = new Put(Bytes.toBytes(key))
         if (title != null && title.length > 0) put.addColumn(Bytes.toBytes("comments"), Bytes.toBytes("topic"), Bytes.toBytes(title))

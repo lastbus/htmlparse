@@ -41,17 +41,18 @@ object ParserFactory extends Serializable{
   }
 
   def createParseMap(): Map[Pattern, Parser] ={
-    val autoHome = Pattern.compile("http://club\\.autohome\\.com\\.cn/bbs/thread-[]a-z]+-\\d+-\\d+-\\d+\\.htm[l]*")
-    val bitAuto = Pattern.compile("http://baa\\.bitauto\\.com/\\w+/thread-\\d+[-\\d+]*.htm[l]*")
-    val pCAuto = Pattern.compile("http://bbs.pcauto.com.cn/forum-.*")
-    val xCar = Pattern.compile("http://www\\.xcar\\.com\\.cn/bbs/viewthread\\.php\\?tid=\\d+[(\\&page=\\d+)]*")
-    val xinLang = Pattern.compile("http://bbs\\.auto\\.sina\\.com\\.cn/\\d+[/\\d+]*/thread-\\d+-\\d+-\\d+\\.htm[l]*")
-    val soHu = Pattern.compile("http://saa.auto.sohu.com/[a-z]+/thread-\\d+-\\d+.[s]html")
-    val QQ = Pattern.compile("http://club\\.auto\\.qq\\.com/t-\\d+-\\d+\\.htm[l]*")
+
+    val autoHome = Pattern.compile("http://club.autohome.com.cn/bbs/thread-[a-z]+-\\d+-\\d+-\\d+.htm[l]*")
+    val bitAuto = Pattern.compile("http://baa.bitauto.com/\\w+/thread-\\d+[-\\d+]*.htm[l]*")
+    val pCAuto = Pattern.compile("http://bbs.pcauto.com.cn/topic-\\d+[-(\\d+)]*.htm[l]*")
+    val xCar = Pattern.compile("http://www.xcar.com.cn/bbs/viewthread.php\\?tid=[0-9]+[(&page=[0-9]+)]*")
+    val xinLang = Pattern.compile("http://bbs.auto.sina.com.cn/[0-9]+(/[0-9]+)*/thread-[0-9]+-[0-9]+-[0-9]+.htm[l]*")
+    val soHu = Pattern.compile("http://saa.auto.sohu.com/[a-z]+/thread-[0-9]+-[0-9]+.[s]*htm[l]*")
+    val QQ = Pattern.compile("http://club.auto.qq.com/t-[0-9]+-[0-9]+.htm[l]*")
 
     val parseMap = mutable.HashMap.empty[Pattern, Parser]
 
-    parseMap(autoHome) = new AutoHomeParser
+//    parseMap(autoHome) = new AutoHomeParser
     parseMap(bitAuto) = new BitAutoParser
     parseMap(pCAuto) = new PCAutoParser
     parseMap(xCar) = new XCarParser

@@ -15,46 +15,9 @@ import org.jsoup.Jsoup
  */
 class XinLangParser extends Parser{
 
-  def getTime(s: String): String ={
-    val matcher = timePattern.matcher(s)
-    var time: String = null
-    if(matcher.find()){
-      time = s.substring(matcher.start(), matcher.end())
-    }
-    time
-  }
-
-  def getView(s: String): String ={
-    val matcher = viewPattern.matcher(s)
-    var view: String = null
-    if(matcher.find()){
-      println("yes")
-      view = s.substring(matcher.start(), matcher.end())
-      println(matcher.start())
-      println(matcher.end())
-    }
-    view
-  }
-
-  def getRepaly(s : String) : String ={
-    val matcher = replayPattern.matcher(s)
-    var replay: String = null
-    if(matcher.find()){
-      println("yes")
-      replay = s.substring(matcher.start(), matcher.end())
-    }
-    replay
-  }
-
-  val timePattern = Pattern.compile("\\d{4}-\\d{1,2}-\\d{1,2} \\d{1,2}:\\d{1,2}")
-  val viewPattern = Pattern.compile("浏览 \\.*次")
-  val replayPattern = Pattern.compile("回复\\.{1,}次")
-  val sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm")
-  val sdf2 = new SimpleDateFormat("yyyyMMddHHmmss")
-
 
   override def run(content: Content, selector: Selector): Array[Put] = {
-    try{
+//    try{
     val html = new String(content.getContent, "gb2312")
     val url = content.getUrl
     val host = new URL(url).getHost
@@ -69,7 +32,7 @@ class XinLangParser extends Parser{
     val putsArray = new Array[Put](lists.size())
     var i = 0
     for(list <- elements2List(lists)){
-      val arr = new Array[(String,String, String)](9)
+      val arr = new Array[(String,String, String)](5)
       temp = list.select("table tbody tr:eq(0) td:eq(0) cite a").text().trim
       arr(0) = if(temp != null && temp.length > 0) ("comments", "username", temp) else null
       temp = list.select("table tbody tr:eq(0) td:eq(1) div.postinfo strong").text().trim
@@ -97,9 +60,9 @@ class XinLangParser extends Parser{
       i += 1
     }
     return putsArray
-    }catch {
-      case _ :Exception => return null
-    }
+//    }catch {
+//      case _ :Exception => return null
+//    }
   }
 
 

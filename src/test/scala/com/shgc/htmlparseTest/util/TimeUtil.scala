@@ -34,8 +34,11 @@ class TimeUtil {
   def getPostTime = {
     val a = "妨碍鳌鱼 2013-43-43 88:99:00"
     val b = "2011-11-11 99:99:09"
+    val c = ".18011801EE22"
     println(TimeUtil.getPostTime(a))
     println(TimeUtil.getPostTime(b))
+    println(TimeUtil.getPostTime(c))
+    println(TimeUtil.extractTimeString(c))
 
   }
 }

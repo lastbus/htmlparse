@@ -4,7 +4,7 @@ import java.net.URL
 import java.text.SimpleDateFormat
 import java.util.regex.Pattern
 
-import com.shgc.htmlparse.util.{TimeUtil, NumExtractUtil, Selector}
+import com.shgc.htmlparse.util.{FloorUtil, TimeUtil, NumExtractUtil, Selector}
 import org.apache.hadoop.hbase.client.Put
 import org.apache.hadoop.hbase.util.Bytes
 import org.apache.log4j.LogManager
@@ -21,7 +21,8 @@ import scala.collection.mutable.ArrayBuffer
 class AutoHomeParser extends Parser {
   @transient val LOG = LogManager.getLogger(this.getClass.getName)
   var urlMap: Map[Pattern, Selector] = null
-
+  val sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+  val sdf2 = new SimpleDateFormat("yyyyMMddHHmmss")
 
   //  override def run(content: Content, selector: Selector): Array[Put] = {
   //    val html = new String(content.getContent, selector.encoding)
@@ -81,27 +82,15 @@ class AutoHomeParser extends Parser {
   //  }
 
 
-  def getCarType(text: String): String = {
-    val pattern = Pattern.compile("论坛")
-    val matcher = pattern.matcher(text)
-    if (matcher.find()) text.slice(0, matcher.start()) else text
-  }
-
-  def formatFloor(floor: String): String = {
-    if (floor.equals("楼主")) {
-      "0"
-    } else if (floor.equals("沙发")) {
-      "1"
-    } else if (floor.equals("板凳")) {
-      "2"
-    } else if (floor.equals("地板")) {
-      "3"
-    } else floor.substring(0, floor.length - 2)
-  }
-
   override def run(content: Content, selector: Selector): Array[Put] = {
-    try {
+//    try {
+      val metaData = content.getMetadata
+      for( m <- metaData.names()){
+        print(m + ", ")
+      }
+    println
       val html = new String(content.getContent, "gb2312")
+//      println(metaData.toString)
       val url = content.getUrl
       val doc = Jsoup.parse(html)
 
@@ -120,7 +109,7 @@ class AutoHomeParser extends Parser {
       val putsArray = new Array[Put](body.size)
       var i = 0
       for (b <- elements2List(body)) {
-        val arr = new Array[(String, String, String)](16)
+        val arr = new Array[(String, String, String)](17)
 
         temp = b.select("[class=txtcenter fw]").text().trim
         arr(0) = if (temp != null && temp.length > 0) ("comments", "username", temp) else null  //username
@@ -128,7 +117,7 @@ class AutoHomeParser extends Parser {
         arr(1) = if (temp != null && temp.length > 0) ("comments", "level",temp ) else null  //level
 
         val jingHua = NumExtractUtil.getNumArray(b.select("li:contains(精华)").text())
-        if (jingHua != null && jingHua.size == 0) arr(2) = ("comments", "jinghua", jingHua(0))  //精华
+        if (jingHua != null && jingHua.size > 0) arr(2) = ("comments", "jinghua", jingHua(0))  //精华
         val tieZi = NumExtractUtil.getNumArray(b.select("li:contains(帖子)").text())
         if(tieZi.size == 2 ) {
           arr(3) = ("comments", "publish", tieZi(0)) //发布帖子数
@@ -136,7 +125,7 @@ class AutoHomeParser extends Parser {
         }
 
         temp = b.select("li:contains(注册)").text().trim
-        arr(4) =  if(temp != null && temp.length > 0) ("comments", "registertime", TimeUtil.getAutoHomeRT(temp)) else null//register time
+        arr(4) =  if(temp != null && temp.length > 0) ("comments", "registertime", temp) else null//register time
         temp = b.select("li:contains(来自)").text().trim
         arr(5) = if(temp != null && temp.length > 3) ("comments", "area", temp.substring(3)) else null
         temp = b.select("li:contains(所属)").text().trim
@@ -146,9 +135,9 @@ class AutoHomeParser extends Parser {
         temp = b.select("li:contains(爱车)").text().trim
         arr(8) = if(temp != null && temp.length > 3) ("comments", "aiche", temp.substring(3)) else null
         temp = b.select("span[xname=date]").text().trim
-        arr(9) = if(temp != null && temp.length > 6) ("comments", "posttime", TimeUtil.getFloorTime1(temp)) else null
+        arr(9) = if(temp != null && temp.length > 0) ("comments", "posttime", temp) else null // 时间参数暂时不转换了
         temp = b.select("a[class=rightbutlz fr], div[class=fr]").text().trim
-        arr(10) = if(temp != null && temp.length > 3) ("comments", "floor", temp.substring(0, temp.length -1)) else null
+        arr(10) = if(temp != null && temp.length > 0) ("comments", "floor", temp) else null
         temp = b.select("div[class=plr26 rtopconnext] span:contains(来自) a").text.trim
         arr(11) = if(temp != null && temp.length > 0) ("comments", "clientside", temp) else null //手机客户端
         //设计评论部分
@@ -163,29 +152,36 @@ class AutoHomeParser extends Parser {
           temp = b.select(".w740").text().trim
           arr(15) = if(temp != null && temp.length > 0) ("comments", "comment", temp) else  null
         }
+        if(arr(10) != null && arr(10)._3 != null){
+          val key = "autohome"  + "|" + carType + "#" * (8 - carType.length) + "|" +
+            arr(9)._3 + "|" + url + "|" + arr(10)._3
 
-        val key = "autohome"  + "|" + carType + "#" * (8 - carType.length) + "|" +
-          arr(9)._3 + "|" + url + "|" + arr(10)._3
+          val put = new Put((Bytes.toBytes(key)))
 
-        val put = new Put((Bytes.toBytes(key)))
+          if (click != null && click.length > 0) put.addColumn(Bytes.toBytes("comments"), Bytes.toBytes("click"), Bytes.toBytes(click))
+          if (replay != null && replay.length > 0) put.addColumn(Bytes.toBytes("comments"), Bytes.toBytes("replay"), Bytes.toBytes(replay))
+          if(topic != null  && topic.length > 0) put.addColumn(Bytes.toBytes("comments"), Bytes.toBytes("topic"), Bytes.toBytes(topic))
 
-        if (click != null && click.length > 0) put.addColumn(Bytes.toBytes("comments"), Bytes.toBytes("click"), Bytes.toBytes(click))
-        if (replay != null && replay.length > 0) put.addColumn(Bytes.toBytes("comments"), Bytes.toBytes("replay"), Bytes.toBytes(replay))
-        if(topic != null  && topic.length > 0) put.addColumn(Bytes.toBytes("comments"), Bytes.toBytes("topic"), Bytes.toBytes(topic))
+          for (a <- arr if a != null && a._3 != null) {
+            put.addColumn(Bytes.toBytes(a._1), Bytes.toBytes(a._2), Bytes.toBytes(a._3))
+          }
 
-        for (a <- arr if a != null && a._3 != null) {
-          put.addColumn(Bytes.toBytes(a._1), Bytes.toBytes(a._2), Bytes.toBytes(a._3))
+          putsArray(i) = put
+          i += 1
         }
 
-        putsArray(i) = put
-        i += 1
       }
 
      return putsArray
-    }catch {
-      case _ :Exception => { LOG.error("exception: " + content.getUrl);return null}
-    }
+//    }catch {
+//      case _ :Exception => return null
+//    }
 
   }
+
+  /*
+   1 加上 LOG.error("exception: " + content.getUrl) 报空指针错误 NullPointException
+   2 加上数字转换以后总是报错！！！不知道什么原因。处理方法：1 将所有处理数字的步骤去掉，看看输出结果咋样
+   */
 
 }

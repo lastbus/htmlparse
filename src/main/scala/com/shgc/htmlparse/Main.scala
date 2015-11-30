@@ -4,7 +4,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.regex.Pattern
 
-import com.shgc.htmlparse.parse.{ParserFactory}
+import com.shgc.htmlparse.parse.{AutoHomeParser, ParserFactory, Parser}
 import com.shgc.htmlparse.util.{Selector, ParseConfiguration, SparkManagerFactor}
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.hbase.HBaseConfiguration
@@ -16,7 +16,6 @@ import org.apache.hadoop.io.Text
 import org.apache.hadoop.mapreduce.Job
 import org.apache.log4j.LogManager
 import org.apache.nutch.protocol.Content
-import com.shgc.htmlparse.parse.Parser
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.{PairRDDFunctions, RDD}
 
@@ -72,24 +71,49 @@ object Main{
 
     val rawDataRDD = sc.sequenceFile[Text, Content](path)
     println(s"input html num: ${rawDataRDD.count()}")
+//    rawDataRDD.cache()
 
-    val b = rawDataRDD.map{case(url, content) =>{
-      var pars: Parser = null
-      for((urlPattern, p) <- parser){
-        if(urlPattern.matcher(url.toString).matches()) pars = p
-      }
+    val autoHome = Pattern.compile("http://club.autohome.com.cn/bbs/thread-[a-z]+-\\d+-\\d+-\\d+.htm[l]*")
+    val autoHomeParse = new AutoHomeParser
+    val b = rawDataRDD.map(doc => {
+//      var put: Array[Put] = null
+      if(autoHome.matcher(doc._1.toString).matches()) {
+//        try{
+          autoHomeParse.run(doc._2, selector)
+//        }catch {
+//          case _ :Exception => {println("exception:  " + doc._1); put = null}
+//        }
+      }else null
+//      put
+    })
+    println(s"autohome : ${b.count()}")
 
-      if(pars == null) null else {
-        pars.run(content, selector)
-      }
-    }}.filter(puts => puts != null)
+//    val b = rawDataRDD.map{case(url, content) =>{
+//      var pars: Parser = null
+//      for((urlPattern, p) <- parser){
+//        if(urlPattern.matcher(url.toString).matches()) pars = p
+//      }
+//
+//      if(pars == null) null else {
+//        pars.run(content, selector)
+//      }
+//    }}
+    val c = b.filter(puts => puts != null)
 
-    println(s"html after filter: ${b.count()}")
+//    rawDataRDD.unpersist()
+    c.cache()
+    println(s"html after filter: ${c.count()}")
 
-    val result = b.flatMap(put => put).map(put => (new ImmutableBytesWritable(put.getRow), put))
+    val result = c.flatMap(put => put).filter(put => put != null).map(put => (new ImmutableBytesWritable(put.getRow), put))
+    result.cache()
+    c.unpersist()
+    println(s"floor num:  ${result.count()}")
 
     val hadoopConf = SparkManagerFactor.getHBaseHadoopConf(table)
     result.saveAsNewAPIHadoopDataset(hadoopConf)
+    result.unpersist()
+
+
     sc.stop()
   }
 

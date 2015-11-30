@@ -6,6 +6,7 @@ import java.util.regex.Pattern
 
 import com.shgc.htmlparse.parse.Qy58Parser
 import com.shgc.htmlparse.util.{NumExtractUtil, ParseConfiguration}
+import org.apache.hadoop.hbase.client.Scan
 import org.apache.hadoop.hbase.util.Bytes
 import org.apache.nutch.protocol.Content
 import org.jsoup.Jsoup
@@ -27,6 +28,7 @@ class JsoupTest {
 
   @Test
   def main2: Unit ={
+    val s = new Scan()
     val url = "http://club.autohome.com.cn/bbs/thread-c-3217-46839120-1.html"
     //    require(ParseConfiguration.readConf())
     //    val selectorMap = ParseConfiguration.urlMap.toMap

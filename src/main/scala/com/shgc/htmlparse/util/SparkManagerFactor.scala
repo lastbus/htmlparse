@@ -25,7 +25,9 @@ object SparkManagerFactor {
     if(sc != null) sc else {
       val sparkConf = new SparkConf().setAppName(appName).
         set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
+      sparkConf.setMaster("local[3]")
       sc = new SparkContext(sparkConf)
+
       sc
     }
   }
