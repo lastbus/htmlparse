@@ -7,7 +7,7 @@ import scala.collection.mutable.ArrayBuffer
 /**
  * Created by Administrator on 2015/11/25.
  */
-object NumExtractUtil {
+object NumExtractUtil extends Serializable{
   val pattern = Pattern.compile("\\d+")
   val stringPattern = Pattern.compile("[a-zA-z]+")
   val bitAutoPattern = Pattern.compile("^\\d+ [(（]\\d+精华[)）]")

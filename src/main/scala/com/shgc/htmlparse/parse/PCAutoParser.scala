@@ -2,6 +2,7 @@ package com.shgc.htmlparse.parse
 
 import java.net.URL
 import java.text.SimpleDateFormat
+import java.util.regex.Pattern
 
 import com.shgc.htmlparse.util.{FloorUtil, TimeUtil, NumExtractUtil, Selector}
 import org.apache.hadoop.hbase.client.Put
@@ -17,8 +18,10 @@ class PCAutoParser extends Parser {
 
   override def run(content: Content, selector: Selector): Array[Put] = {
 
+    val contentType = content.getMetadata.get("Content-Type").split("=")
+    val encoding = if(contentType.length > 1) contentType(1) else "gb2312"
     try {
-      val html = new String(content.getContent, "gb2312")
+      val html = new String(content.getContent, encoding)
       val url = content.getUrl
       val doc = Jsoup.parse(html)
 
@@ -43,7 +46,7 @@ class PCAutoParser extends Parser {
         temp = list.select(".user_atten li:eq(2)").text().trim
         arr(3) = if(temp != null && temp.length > 0) ("comments", "publish", NumExtractUtil.getNumArray(temp)(0)) else null
         temp = list.select(".post_time").text().trim
-        arr(4) = if(temp != null && temp.length > 0) ("comments", "posttime",TimeUtil.getPostTime(temp) ) else null
+        arr(4) = if(temp != null && temp.length > 0) ("comments", "posttime", getPostTime(temp) ) else null
         temp = list.select(".post_msg").text().trim
         arr(5) = if(temp != null && temp.length > 0) ("comments", "comment", temp) else null
         temp = list.select(".post_floor em, .post_floor").text().trim
@@ -69,5 +72,26 @@ class PCAutoParser extends Parser {
       case _ :Exception => return null
     }
     }
+
+  def getFloorTime(s: String): String = {
+    null
+  }
+
+  def getPostTime(s: String): String = {
+    val timeString = TimeUtil.extractTimeString(s)
+    if(timeString != null && timeString.length >= 8) sdf2.format(sdf.parse(timeString)) else null
+  }
+
+  def getRegisterTime(s: String): String ={
+    if(s == null || s.length < 6) return null
+    val matcher = registerTimePattern.matcher(s)
+    if(matcher.find()) sdfRegister.format(sdf3.parse(matcher.group())) else null
+  }
+
+  val sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm")
+  val sdf2 = new SimpleDateFormat("yyyyMMddHHmmss")
+  val sdf3 = new SimpleDateFormat("yyyy-MM-dd")
+  val sdfRegister = new SimpleDateFormat("yyyyMMdd")
+  val registerTimePattern = Pattern.compile("\\d{2,4}-\\d{1,2}-\\d{1,2}")
 
 }

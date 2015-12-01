@@ -21,8 +21,6 @@ import scala.collection.mutable.ArrayBuffer
 class AutoHomeParser extends Parser {
   @transient val LOG = LogManager.getLogger(this.getClass.getName)
   var urlMap: Map[Pattern, Selector] = null
-  val sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
-  val sdf2 = new SimpleDateFormat("yyyyMMddHHmmss")
 
   //  override def run(content: Content, selector: Selector): Array[Put] = {
   //    val html = new String(content.getContent, selector.encoding)
@@ -83,14 +81,9 @@ class AutoHomeParser extends Parser {
 
 
   override def run(content: Content, selector: Selector): Array[Put] = {
-//    try {
-      val metaData = content.getMetadata
-      for( m <- metaData.names()){
-        print(m + ", ")
-      }
-    println
-      val html = new String(content.getContent, "gb2312")
-//      println(metaData.toString)
+      val metaData = content.getMetadata.get("Content-Type").split("=")
+      val encoding = if(metaData.length > 1) metaData(1) else "gb2312"  // 得到网页的编码
+      val html = new String(content.getContent, encoding)
       val url = content.getUrl
       val doc = Jsoup.parse(html)
 
@@ -107,6 +100,7 @@ class AutoHomeParser extends Parser {
 
       val body = doc.select("body #topic_detail_main #content #cont_main div[id^=maxwrap] div[id^=F]")
       val putsArray = new Array[Put](body.size)
+    //    try {
       var i = 0
       for (b <- elements2List(body)) {
         val arr = new Array[(String, String, String)](17)
@@ -135,9 +129,10 @@ class AutoHomeParser extends Parser {
         temp = b.select("li:contains(爱车)").text().trim
         arr(8) = if(temp != null && temp.length > 3) ("comments", "aiche", temp.substring(3)) else null
         temp = b.select("span[xname=date]").text().trim
-        arr(9) = if(temp != null && temp.length > 0) ("comments", "posttime", temp) else null // 时间参数暂时不转换了
+//        println("temp: " + temp)
+        arr(9) = if(temp != null && temp.length > 0) ("comments", "posttime", getPostTime(temp)) else null // 时间参数暂时不转换了
         temp = b.select("a[class=rightbutlz fr], div[class=fr]").text().trim
-        arr(10) = if(temp != null && temp.length > 0) ("comments", "floor", temp) else null
+        arr(10) = if(temp != null && temp.length > 0) ("comments", "floor", FloorUtil.getFloorNumber(temp)) else null
         temp = b.select("div[class=plr26 rtopconnext] span:contains(来自) a").text.trim
         arr(11) = if(temp != null && temp.length > 0) ("comments", "clientside", temp) else null //手机客户端
         //设计评论部分
@@ -182,6 +177,34 @@ class AutoHomeParser extends Parser {
   /*
    1 加上 LOG.error("exception: " + content.getUrl) 报空指针错误 NullPointException
    2 加上数字转换以后总是报错！！！不知道什么原因。处理方法：1 将所有处理数字的步骤去掉，看看输出结果咋样
+    哦，突然想起来了：是不是因为我的 TimeUtil没有继承 Serializer类的原因，传输过程中序列化编码出现问题了，ok，立刻验证一下
+    验证过了，貌似还不行。
+    3 问题应该出现在提取的  文本那里吧，继续验证，但是及时提取文本出错的话，正则表达式提取不到时间，那返回值也是null，怎么会出错呢？？？？
+    可能是我的逻辑出错了吧
+    4 终于找到原因了： 线程安全的问题！！！
    */
+
+
+  def getFloorTime(s: String): String = {
+    null
+  }
+
+  def getPostTime(s: String): String = {
+    val timeString = TimeUtil.extractTimeString(s)
+    if(timeString != null && timeString.length >= 8) sdf2.format(sdf.parse(timeString)) else null
+  }
+
+  def getRegisterTime(s: String): String ={
+    if(s == null || s.length < 6) return null
+    val matcher = registerTimePattern.matcher(s)
+    if(matcher.find()) sdfRegister.format(sdf3.parse(matcher.group())) else null
+  }
+
+  val sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+  val sdf2 = new SimpleDateFormat("yyyyMMddHHmmss")
+  val sdf3 = new SimpleDateFormat("yyyy年MM月dd日")
+  val sdfRegister = new SimpleDateFormat("yyyyMMdd")
+  val registerTimePattern = Pattern.compile("\\d{2,4}年\\d{1,2}月\\d{1,2}日")
+
 
 }

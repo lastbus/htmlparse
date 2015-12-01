@@ -2,6 +2,7 @@ package com.shgc.htmlparseTest.util
 
 import com.shgc.htmlparse.util.TimeUtil
 import org.junit.Test
+import org.junit.Assert._
 
 /**
  * Created by Administrator on 2015/11/26.
@@ -35,10 +36,15 @@ class TimeUtil {
     val a = "妨碍鳌鱼 2013-43-43 88:99:00"
     val b = "2011-11-11 99:99:09"
     val c = ".18011801EE22"
+    val d = "发表于 2014-6-27 17:36:33"
+    val e = "2010-2-26 08:03:48"
     println(TimeUtil.getPostTime(a))
     println(TimeUtil.getPostTime(b))
     println(TimeUtil.getPostTime(c))
     println(TimeUtil.extractTimeString(c))
+    assertEquals("20140627173600", TimeUtil.getPostTime(d))
+    println( " +++" + TimeUtil.extractTimeString(" "))
+    assertEquals("20100226080300", TimeUtil.getPostTime(e))
 
   }
 }

@@ -20,9 +20,7 @@ import scala.collection.mutable.ArrayBuffer
 @Test
 class XCar {
 
-  val sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm")
-  val sdf2 = new SimpleDateFormat("yyyyMMddHHmmss")
-  val timePattern = Pattern.compile("\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}")
+
 
   @Test
   def run ={
@@ -47,6 +45,23 @@ class XCar {
       arr(1) = if(temp != null && temp.length > 0) ("comments", "level", temp) else null
       temp = list.select("td:eq(0) div.smalltxt p:last-child").text()
       arr(2) = if(temp != null && temp.length > 0) ("comments", "all", temp) else null
+
+      val matcher1 = caiChanPattern.matcher(temp)
+      val caiChan = if(matcher1.find()) matcher1.group() else null
+      if(caiChan != null) arr(9) = ("comments", "caichan", caiChan.substring(0, caiChan.indexOf("爱")).trim)
+
+      val match2 = registerPattern.matcher(temp)
+      val zhuce = if(match2.find()) match2.group() else null
+      if(zhuce != null) arr(10) = ("comments", "zhuce", registerTime.format(registerTime.parse(zhuce)))
+
+      val matcher4 = tieZiPattern.matcher(temp)
+      val tieZi = if (matcher4.find()) matcher4.group() else null
+      if(tieZi != null) arr(11) = ("comments", "tiezi", tieZi.substring(0, tieZi.indexOf("帖")).trim)
+
+      val matcher5 = areaPattern.matcher(temp)
+      val area = if(matcher5.find()) matcher5.group() else null
+      if(area != null) arr(12) = ("comments", "area", if(area.split(":").length > 1) area.split(":")(1) else area.split("：")(1) )
+
       temp = list.select("td:eq(1) table tbody tr:eq(0) td a").text()
       arr(3) = if(temp != null && temp.length > 0) ("comments", "floor", FloorUtil.getFloorNumber(temp, 1)) else null
       temp = list.select("td:eq(1) table tbody tr:eq(0) td div div:contains(发表于)").text()
@@ -104,5 +119,28 @@ class XCar {
     arr.toArray
   }
 
+  def getSplit(s: String): String = {
+    val matcher1 = caiChanPattern.matcher(s)
+    if(matcher1.find()) matcher1.group() else null
+    val match2 = registerPattern.matcher(s)
+    if(match2.find()) match2.group() else null
+    val matcher3 = registerPattern.matcher(s)
+    if(matcher3.find()) matcher3.group() else null
+    val matcher4 = tieZiPattern.matcher(s)
+    if (matcher4.find()) matcher4.group() else null
+    val matcher5 = areaPattern.matcher(s)
+    if(matcher5.find()) matcher5.group() else null
+  }
+
+  val sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm")
+  val sdf2 = new SimpleDateFormat("yyyyMMddHHmmss")
+  val timePattern = Pattern.compile("\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}")
+
+  val caiChanPattern = Pattern.compile("\\d+[ ]爱卡币")
+  val registerPattern = Pattern.compile("\\d{2,4}-\\d{1,2}-\\d{1,2}")
+  val tieZiPattern = Pattern.compile("\\d+[ ]*帖")
+  val areaPattern = Pattern.compile("来自[：:][ ]*.*$")
+
+  val registerTime = new SimpleDateFormat("yyyyMMdd")
 
 }

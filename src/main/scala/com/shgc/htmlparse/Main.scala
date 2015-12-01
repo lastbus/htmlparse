@@ -73,31 +73,29 @@ object Main{
     println(s"input html num: ${rawDataRDD.count()}")
 //    rawDataRDD.cache()
 
-    val autoHome = Pattern.compile("http://club.autohome.com.cn/bbs/thread-[a-z]+-\\d+-\\d+-\\d+.htm[l]*")
-    val autoHomeParse = new AutoHomeParser
-    val b = rawDataRDD.map(doc => {
-//      var put: Array[Put] = null
-      if(autoHome.matcher(doc._1.toString).matches()) {
-//        try{
-          autoHomeParse.run(doc._2, selector)
-//        }catch {
-//          case _ :Exception => {println("exception:  " + doc._1); put = null}
-//        }
-      }else null
-//      put
-    })
-    println(s"autohome : ${b.count()}")
+//    val autoHome = Pattern.compile("http://club.autohome.com.cn/bbs/thread-[a-z]+-\\d+-\\d+-\\d+.htm[l]*")
+//    val autoHomeParse = new AutoHomeParser
+//    val b = rawDataRDD.map(doc => {
+//      if(autoHome.matcher(doc._1.toString).matches()) {
+//          autoHomeParse.run(doc._2, selector)
+//      }else null
+//    })
+//    println(s"autohome : ${b.count()}")
 
-//    val b = rawDataRDD.map{case(url, content) =>{
-//      var pars: Parser = null
-//      for((urlPattern, p) <- parser){
-//        if(urlPattern.matcher(url.toString).matches()) pars = p
-//      }
-//
-//      if(pars == null) null else {
-//        pars.run(content, selector)
-//      }
-//    }}
+    val b = rawDataRDD.map{case(url, content) =>{
+      var pars: Parser = null
+      for((urlPattern, p) <- parser){
+        if(urlPattern.matcher(url.toString).matches()) pars = p
+      }
+
+      if(pars == null) null else {
+        try{
+          pars.run(content, selector)
+        }catch {
+          case _ : Exception => {println("error: " + url.toString); null}
+        }
+      }
+    }}
     val c = b.filter(puts => puts != null)
 
 //    rawDataRDD.unpersist()

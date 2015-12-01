@@ -15,9 +15,12 @@ import org.jsoup.Jsoup
  */
 class XCarParser extends Parser {
 
+
   override def run(content: Content, selector: Selector): Array[Put] = {
 //    try{
-    val html = new String(content.getContent, "gb2312")
+    val contentType = content.getMetadata.get("Content-Type").split("=")
+    val encoding = if(contentType.length > 1) contentType(1) else "gb2312"
+    val html = new String(content.getContent, encoding)
     val url = content.getUrl
     val doc = Jsoup.parse(html)
     var temp: String = null
@@ -38,10 +41,28 @@ class XCarParser extends Parser {
       arr(1) = if(temp != null && temp.length > 0) ("comments", "level", temp) else null
       temp = list.select("td:eq(0) div.smalltxt p:last-child").text()
       arr(2) = if(temp != null && temp.length > 0) ("comments", "all", temp) else null
+
+      val matcher1 = caiChanPattern.matcher(temp)
+      val caiChan = if(matcher1.find()) matcher1.group() else null
+      if(caiChan != null) arr(9) = ("comments", "jifen", caiChan.substring(0, caiChan.indexOf("爱")).trim)
+
+      val match2 = registerPattern.matcher(temp)
+      val zhuce = if(match2.find()) match2.group() else null
+      if(zhuce != null) arr(10) = ("comments", "registertime", sdfRegister.format(sdfRegister.parse(zhuce)))
+
+      val matcher4 = tieZiPattern.matcher(temp)
+      val tieZi = if (matcher4.find()) matcher4.group() else null
+      if(tieZi != null) arr(11) = ("comments", "publish", tieZi.substring(0, tieZi.indexOf("帖")).trim)
+
+      val matcher5 = areaPattern.matcher(temp)
+      val area = if(matcher5.find()) matcher5.group() else null
+      if(area != null) arr(12) = ("comments", "area", if(area.split(":").length > 1) area.split(":")(1) else area.split("：")(1) )
+
+
       temp = list.select("td:eq(1) table tbody tr:eq(0) td a").text()
       arr(3) = if(temp != null && temp.length > 0) ("comments", "floor", FloorUtil.getFloorNumber(temp, 1)) else null
       temp = list.select("td:eq(1) table tbody tr:eq(0) td div div:contains(发表于)").text()
-      arr(4) = if(temp != null && temp.length > 0) ("comments", "posttime", TimeUtil.getPostTime(temp)) else null
+      arr(4) = if(temp != null && temp.length > 0) ("comments", "posttime", getPostTime(temp)) else null
       temp = list.select("td:eq(1) table tbody tr:eq(0) td a.link_bg").text()
       arr(5) = if(temp != null && temp.length > 0) ("comments", "clientside", temp) else null
 
@@ -81,4 +102,27 @@ class XCarParser extends Parser {
 //    }
 
   }
+
+  def getPostTime(s: String): String ={
+    val timeString = TimeUtil.extractTimeString(s)
+    if(timeString != null && timeString.length >= 6) sdf2.format(sdf.parse(timeString)) else null
+  }
+
+  def getRegisterTime(s: String): String ={
+    if(s == null || s.length < 6) return null
+    val matcher = registerTimePattern.matcher(s)
+    if(matcher.find()) sdfRegister.format(sdf3.parse(matcher.group())) else null
+  }
+
+  val sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm")
+  val sdf2 = new SimpleDateFormat("yyyyMMddHHmmss")
+  val sdf3 = new SimpleDateFormat("yyyy-MM-dd")
+  val sdfRegister = new SimpleDateFormat("yyyyMMdd")
+  val registerTimePattern = Pattern.compile("\\d{2,4}-\\d{1,2}-\\d{1,2}")
+
+  val caiChanPattern = Pattern.compile("\\d+[ ]爱卡币")
+  val registerPattern = Pattern.compile("\\d{2,4}-\\d{1,2}-\\d{1,2}")
+  val tieZiPattern = Pattern.compile("\\d+[ ]*帖")
+  val areaPattern = Pattern.compile("来自[：:][ ]*.*$")
+
 }

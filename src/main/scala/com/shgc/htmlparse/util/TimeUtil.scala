@@ -6,7 +6,7 @@ import java.util.regex.Pattern
 /**
  * Created by Administrator on 2015/11/24.
  */
-object TimeUtil {
+object TimeUtil extends Serializable{
 
   val sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm")
   val sdf2 = new SimpleDateFormat("yyyyMMddHHmmss")
@@ -29,9 +29,20 @@ object TimeUtil {
     sdf2.format(sdf.parse(s))
   }
 
+  /**
+   * this method is not thread safe!
+   * @param s
+   * @return
+   */
   def getPostTime(s: String): String ={
     val timeString = extractTimeString(s)
-    if(timeString == null) null else sdf2.format(sdf.parse(timeString))
+    if(timeString == null || timeString.length < 8) null
+    else try{
+      sdf2.format(sdf.parse(timeString))
+    }catch {
+      case e: NumberFormatException => {println("=================" + timeString); null}
+    }
+
   }
 
   def extractTimeString(s: String): String = {

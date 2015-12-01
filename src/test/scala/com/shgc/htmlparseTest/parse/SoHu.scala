@@ -22,7 +22,7 @@ class SoHu {
 
   @Test
   def run = {
-    val url = "http://saa.auto.sohu.com/benben/thread-292971439450333-1.shtml"
+    val url = "http://saa.auto.sohu.com/benben/thread-200621441159828-1.shtml"
     val html = Jsoup.connect(url).get().html()
     val doc = Jsoup.parse(html)
     var temp: String = null

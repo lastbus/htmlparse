@@ -15,12 +15,12 @@ import org.jsoup.Jsoup
  */
 class XinLangParser extends Parser{
 
-
   override def run(content: Content, selector: Selector): Array[Put] = {
 //    try{
-    val html = new String(content.getContent, "gb2312")
+    val contentType = content.getMetadata.get("Content-Type").split("=")
+    val encoding = if(contentType.length > 1) contentType(1) else "gb2312"
+    val html = new String(content.getContent, encoding)
     val url = content.getUrl
-    val host = new URL(url).getHost
     val doc = Jsoup.parse(html)
     var temp: String = null
     val luntan = doc.select("#wrap span a[name=D]").text()
@@ -38,7 +38,7 @@ class XinLangParser extends Parser{
       temp = list.select("table tbody tr:eq(0) td:eq(1) div.postinfo strong").text().trim
       arr(1) = if(temp != null && temp.length > 0) ("comments", "floor", FloorUtil.getFloorNumber(temp, 1)) else null
       temp = list.select("table tbody tr:eq(0) td:eq(1) div.postinfo").text()
-      arr(2) = if(temp != null && temp.length > 0) ("comments", "post-time", TimeUtil.getPostTime(temp)) else null
+      arr(2) = if(temp != null && temp.length > 0) ("comments", "post-time", getPostTime(temp)) else null
       temp = list.select("table tbody tr:eq(0) td:eq(1) div.postmessage div.t_msgfont").text()
       arr(3) = if(temp != null && temp.length > 0) ("comments", "comment", temp) else null
       temp = list.select("table tbody tr:eq(0) td:eq(0) p em").text()
@@ -65,5 +65,21 @@ class XinLangParser extends Parser{
 //    }
   }
 
+  def getPostTime(s: String): String ={
+    val timeString = TimeUtil.extractTimeString(s)
+    if(timeString != null && timeString.length >= 6) sdf2.format(sdf.parse(timeString)) else null
+  }
+
+  def getRegisterTime(s: String): String ={
+    if(s == null || s.length < 6) return null
+    val matcher = registerTimePattern.matcher(s)
+    if(matcher.find()) sdfRegister.format(sdf3.parse(matcher.group())) else null
+  }
+
+  val sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm")
+  val sdf2 = new SimpleDateFormat("yyyyMMddHHmmss")
+  val sdf3 = new SimpleDateFormat("yyyy-MM-dd")
+  val sdfRegister = new SimpleDateFormat("yyyyMMdd")
+  val registerTimePattern = Pattern.compile("\\d{2,4}-\\d{1,2}-\\d{1,2}")
 
 }

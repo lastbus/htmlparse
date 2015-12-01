@@ -52,7 +52,7 @@ object ParserFactory extends Serializable{
 
     val parseMap = mutable.HashMap.empty[Pattern, Parser]
 
-//    parseMap(autoHome) = new AutoHomeParser
+    parseMap(autoHome) = new AutoHomeParser
     parseMap(bitAuto) = new BitAutoParser
     parseMap(pCAuto) = new PCAutoParser
     parseMap(xCar) = new XCarParser

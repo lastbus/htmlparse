@@ -1,6 +1,7 @@
 package com.shgc.htmlparse.parse
 
 import java.text.SimpleDateFormat
+import java.util.regex.Pattern
 
 import com.shgc.htmlparse.util.{NumExtractUtil, FloorUtil, TimeUtil, Selector}
 import org.apache.hadoop.hbase.client.Put
@@ -14,8 +15,10 @@ import org.jsoup.Jsoup
 class SoHuParse extends Parser{
 
   override def run(content: Content, selector: Selector): Array[Put] = {
+    val  contentType = content.getMetadata.get("Content-Type").split("=")
+    val encoding = if(contentType.length > 1) contentType(1) else "gbk"
     val url = content.getUrl
-    val html = new String(content.getContent, "gbk")
+    val html = new String(content.getContent, encoding)
     val doc = Jsoup.parse(html)
     var temp: String = null
 //    try {
@@ -38,11 +41,11 @@ class SoHuParse extends Parser{
         temp = list.select("div.con-side p:contains(等级)").text().trim
         arr(2) = if(temp != null && temp.length >0) ("comments", "level",  temp.substring(temp.indexOf("：") + 1)) else null
         temp = list.select("div.con-side p:contains(注册)").text().trim
-        arr(3) = if(temp != null && temp.length >0) ("comments", "registertime", TimeUtil.getBitAutoTime(temp)) else null
+        arr(3) = if(temp != null && temp.length >0) ("comments", "registertime", getRegisterTime(temp)) else null
         temp = list.select("div.con-side p:contains(爱车)").text().trim
         arr(4) = if(temp != null && temp.length >0) ("comments", "aiche", temp) else null
         temp = list.select("div.con-main-wapper span.floor-time").text().trim
-        arr(5) = if(temp != null && temp.length >0) ("comments", "posttime", TimeUtil.getPostTime(temp)) else null
+        arr(5) = if(temp != null && temp.length >0) ("comments", "posttime", getPostTime(temp)) else null
         temp = if(i ==0) "楼主" else list.select("div.con-main-wapper span.floor").text().trim
         arr(6) = if(temp != null && temp.length >0) ("comments", "floor", FloorUtil.getFloorNumber(temp)) else  null
 
@@ -54,7 +57,7 @@ class SoHuParse extends Parser{
         } else {
           arr(8) = ("comments", "replywho", temp.split(" ")(0))
           val temp2 = list.select("div.con-main-wapper div.con-main div.main-bd").text().trim
-          println(temp2.substring(temp.length))
+//          println(temp2.substring(temp.length))
           arr(9) = ("comments", "comment", temp2.substring(temp.length))
         }
 
@@ -87,5 +90,26 @@ class SoHuParse extends Parser{
 //    }
   }
 
+  def getPostTime(s: String): String ={
+    val timeString = TimeUtil.extractTimeString(s)
+    if(timeString != null && timeString.length >= 6) sdf2.format(sdf.parse(timeString)) else null
+  }
 
+  def getRegisterTime(s: String): String ={
+    if(s == null || s.length < 6) return null
+    val matcher = registerTimePattern.matcher(s)
+    if(matcher.find()) sdfRegister.format(sdf3.parse(matcher.group())) else null
+  }
+
+  val sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+  val sdf2 = new SimpleDateFormat("yyyyMMddHHmmss")
+  val sdf3 = new SimpleDateFormat("yyyy-MM-dd")
+  val sdfRegister = new SimpleDateFormat("yyyyMMdd")
+  val registerTimePattern = Pattern.compile("\\d{2,4}-\\d{1,2}-\\d{1,2}")
+
+
+  /*
+  错误 记录
+  1 数组下标溢出了： val carType = luntan.substring(0, luntan.length - 3)
+   */
 }
