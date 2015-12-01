@@ -48,8 +48,19 @@ class PCAuto {
       arr(3) = if(temp != null && temp.length > 0) ("comments", "tiezi", NumExtractUtil.getNumArray(temp)(0)) else null
       temp = list.select(".post_time").text().trim
       arr(4) = if(temp != null && temp.length > 0) ("comments", "post-time",TimeUtil.getPostTime(temp) ) else null
-      temp = list.select(".post_msg").text().trim
-      arr(5) = if(temp != null && temp.length > 0) ("comments", "comment", temp) else null
+      temp = list.select(".normal_msg table tbody tr:eq(0) td:eq(0) .replyBody span.cite font[color=#05A]").text().trim
+      if(temp!=null && temp.length > 0){
+        arr(7) = if(temp != null && temp.length > 0) ("comments", "replywho", temp.split(" ")(0)) else null
+//        temp = list.select(".normal_msg td:eq(0) .replyBody span.cite font[color=#05A] a:eq(1)").text().trim
+        arr(8) = if(temp != null && temp.length > 0) ("comments", "floor2", FloorUtil.getFloorNumber(temp.split(" ")(1))) else null
+      }else{
+        temp = list.select(".post_msg").text().trim
+        arr(5) = if(temp != null && temp.length > 0) ("comments", "comment", temp) else null
+      }
+
+      temp = list.select(".post_main .post_edition").text().trim
+      arr(9) = if(temp != null && temp.length > 0) ("comments", "clientside", temp.substring(2)) else null
+
       temp = list.select(".post_floor em, .post_floor").text().trim
       arr(6) = if(temp != null && temp.length > 0) ("comments", "floor", FloorUtil.getFloorNumber(temp, 1)) else null  //从 1 开始
 //      ("comments", "", list.select("").text())

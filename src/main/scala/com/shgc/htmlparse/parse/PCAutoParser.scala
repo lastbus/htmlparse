@@ -36,7 +36,7 @@ class PCAutoParser extends Parser {
       val puts = new Array[Put](lists.size())
       var i = 0
       for (list <- elements2List(lists)) {
-        val arr = new Array[(String, String, String)](7)
+        val arr = new Array[(String, String, String)](10)
         temp = list.select("a.needonline").text().trim
         arr(0) = if(temp != null && temp.length > 0)  ("comments", "username", temp) else null
         temp = list.select(".user_atten li:eq(0)").text().trim
@@ -47,17 +47,30 @@ class PCAutoParser extends Parser {
         arr(3) = if(temp != null && temp.length > 0) ("comments", "publish", NumExtractUtil.getNumArray(temp)(0)) else null
         temp = list.select(".post_time").text().trim
         arr(4) = if(temp != null && temp.length > 0) ("comments", "posttime", getPostTime(temp) ) else null
-        temp = list.select(".post_msg").text().trim
-        arr(5) = if(temp != null && temp.length > 0) ("comments", "comment", temp) else null
+
+        temp = list.select(".normal_msg table tbody tr:eq(0) td:eq(0) .replyBody span.cite font[color=#05A]").text().trim
+        if(temp!=null && temp.length > 0){
+          arr(7) = if(temp != null && temp.length > 0) ("comments", "replywho", temp.split(" ")(0)) else null
+          //        temp = list.select(".normal_msg td:eq(0) .replyBody span.cite font[color=#05A] a:eq(1)").text().trim
+          arr(8) = if(temp != null && temp.length > 0) ("comments", "floor2", FloorUtil.getFloorNumber(temp.split(" ")(1))) else null
+        }else{
+          temp = list.select(".post_msg").text().trim
+          arr(5) = if(temp != null && temp.length > 0) ("comments", "comment", temp) else null
+        }
+
         temp = list.select(".post_floor em, .post_floor").text().trim
         arr(6) = if(temp != null && temp.length > 0) ("comments", "floor", FloorUtil.getFloorNumber(temp, 1)) else null  //从 1 开始
+
+        temp = list.select(".post_main .post_edition").text().trim
+        arr(9) = if(temp != null && temp.length > 0) ("comments", "clientside", temp.substring(2)) else null
+
 
         val time = arr(4)._3
         val key = "pcauto" + " " * 2 + "|" + luntan.substring(0, luntan.length - 2) + "|" + time + "|" + url + "|" + arr(6)._3
 
         val put = new Put(Bytes.toBytes(key))
         if (title != null && title.length > 0) put.addColumn(Bytes.toBytes("comments"), Bytes.toBytes("topic"), Bytes.toBytes(title))
-        if (view != null && view.length > 0) put.addColumn(Bytes.toBytes("comments"), Bytes.toBytes("view"), Bytes.toBytes(view))
+        if (view != null && view.length > 0) put.addColumn(Bytes.toBytes("comments"), Bytes.toBytes("click"), Bytes.toBytes(view))
         if (reply != null && reply.length > 0) put.addColumn(Bytes.toBytes("comments"), Bytes.toBytes("reply"), Bytes.toBytes(reply))
 
         for (c <- arr if c != null && c._3 != null) {

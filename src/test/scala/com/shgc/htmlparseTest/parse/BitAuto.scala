@@ -60,7 +60,7 @@ class BitAuto {
       temp = t.select("li:contains(册)").text().trim
       contArray(5) = if(temp != null && temp.length > 0) ("comments", "registerTime", TimeUtil.getBitAutoTime(temp)) else null
       temp = t.select("span[role=postTime]").text().trim
-      contArray(6) = if(temp != null && temp.length > 0) ("comments", "post-time", TimeUtil.getPostTime(temp)) else null
+      contArray(6) = if(temp != null && temp.length > 0) ("comments", "posttime", TimeUtil.getPostTime(temp)) else null
       temp = t.select("div[class=post_width]").text().trim
       contArray(7) = if(temp != null && temp.length > 0) ("comments", "comment", temp) else null
       temp = t.select("div[class=floor_box]").text().trim

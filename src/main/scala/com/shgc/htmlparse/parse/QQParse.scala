@@ -65,11 +65,11 @@ class QQParse extends Parser{
           "|" + url + "|" + arr(9)._3
         val put = new Put(Bytes.toBytes(key))
         if (problem != null && problem.length > 0)
-          put.addColumn(Bytes.toBytes("comments"), Bytes.toBytes("problem"), Bytes.toBytes(problem))
+          put.addColumn(Bytes.toBytes("comments"), Bytes.toBytes("topic"), Bytes.toBytes(problem))
         if (clickAndView != null && clickAndView.length > 0) {
           val clickView = NumExtractUtil.getNumArray(clickAndView)
           put.addColumn(Bytes.toBytes("comments"), Bytes.toBytes("replay"), Bytes.toBytes(clickView(1).substring(1)))
-          put.addColumn(Bytes.toBytes("comments"), Bytes.toBytes("view"), Bytes.toBytes(clickView(0).substring(1)))
+          put.addColumn(Bytes.toBytes("comments"), Bytes.toBytes("click"), Bytes.toBytes(clickView(0).substring(1)))
         }
         for (a <- arr if a != null) {
           put.addColumn(Bytes.toBytes(a._1), Bytes.toBytes(a._2), Bytes.toBytes(a._3))

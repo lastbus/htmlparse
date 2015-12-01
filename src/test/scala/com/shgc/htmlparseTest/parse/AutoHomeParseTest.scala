@@ -20,7 +20,7 @@ class AutoHomeParseTest {
 
   @Test
   def testRun = {
-    val url = "http://club.autohome.com.cn/bbs/thread-c-3217-46839120-1.html"
+    val url = "http://club.autohome.com.cn/bbs/thread-c-2334-34779473-1.html"
     val html = Jsoup.connect(url).get().toString
     val doc = Jsoup.parse(html)
 
@@ -45,6 +45,11 @@ class AutoHomeParseTest {
       arr(0) = if (temp != null && temp.length > 0) ("comments", "username", temp) else null  //username
       temp = b.select(".lv-txt").text().trim
       arr(1) = if (temp != null && temp.length > 0) ("comments", "level",temp ) else null  //level
+      //其他称号
+      if(arr(1) == null){
+        temp = b.select(".txtcenter:last-child").text().trim
+        arr(1) = if (temp != null && temp.length > 0) ("comments", "level",temp ) else null
+      }
 
       val jingHua = NumExtractUtil.getNumArray(b.select("li:contains(精华)").text())
       if (jingHua != null && jingHua.size == 0) arr(2) = ("comments", "jinghua", jingHua(0))  //精华
@@ -60,10 +65,10 @@ class AutoHomeParseTest {
       arr(5) = if(temp != null && temp.length > 3) ("comments", "area", temp.substring(3)) else null
       temp = b.select("li:contains(所属)").text().trim
       arr(6) = if(temp != null && temp.length > 3) ("comments", "suoshu", temp.substring(3)) else null
-      temp = b.select("li:contains(关注)").text().trim
+      temp = b.select("li:matchesOwn(关注)").text().trim
       arr(7) = if(temp != null && temp.length > 3) ("comments", "guanzhu", temp.substring(3)) else null
       temp = b.select("li:contains(爱车)").text().trim
-      arr(8) = if(temp != null && temp.length > 3) ("comments", "aiche", temp.substring(3)) else null
+      arr(8) = if(temp != null && temp.length > 3) ("comments", "aiche", temp.substring(3).split(" ")(0)) else null
       temp = b.select("span[xname=date]").text().trim
       arr(9) = if(temp != null && temp.length > 0) ("comments", "posttime", TimeUtil.getPostTime(temp)) else null
       temp = b.select("a[class=rightbutlz fr], div[class=fr]").text().trim
@@ -71,16 +76,24 @@ class AutoHomeParseTest {
       temp = b.select("div[class=plr26 rtopconnext] span:contains(来自) a").text.trim
       arr(11) = if(temp != null && temp.length > 0) ("comments", "clientside", temp) else null //手机客户端
       //设计评论部分
-      if (b.select(".w740 .relyhfcon p a:contains(楼)") != null) {
-        temp = b.select(".w740 .relyhfcon p a:contains(楼)").text().trim
-        arr(12) = if(temp != null && temp.length > 0) ("comments", "floor2", temp.substring(0, temp.length - 1)) else null
-        temp = b.select(".w740 .rrlycontxt").text().trim
-        arr(13) = if(temp != null && temp.length > 0) ("comments", "comment2", temp) else null
+      temp = b.select(".w740 .relyhfcon p a:contains(楼)").text().trim
+      println(temp)
+      if ( temp != null && temp.length > 0) {
+        //回复楼上
+        arr(12) = ("comments", "floor2", FloorUtil.getFloorNumber(temp))
+        temp = b.select(".w740 .relyhfcon p:eq(0) a:eq(0)").text().trim
+        arr(13) = if(temp != null && temp.length > 0) ("comments", "replywho", temp) else null
         temp =  b.select(".w740 .yy_reply_cont").text().trim
         arr(14) = if(temp != null && temp.length > 0) ("comments", "comment", temp) else null
       } else {
+        println("no replys")
         temp = b.select(".w740").text().trim
         arr(15) = if(temp != null && temp.length > 0) ("comments", "comment", temp) else  null
+        if(arr(15) == null){
+//          println(b.select(".rconten"))
+          temp = b.select(".rconten").text().trim
+          arr(15) = if(temp != null && temp.length > 0 && temp.indexOf("发表于") == -1) ("comments", "comment", temp) else  null
+        }
       }
       if(arr(9) != null && arr(10) != null && arr(9)._3 != null && arr(10)._3 != null){
         val key = "autohome"  + "|" + carType + "#" * (8 - carType.length) + "|" +
@@ -94,6 +107,7 @@ class AutoHomeParseTest {
 
         for (a <- arr if a != null && a._3 != null) {
           put.addColumn(Bytes.toBytes(a._1), Bytes.toBytes(a._2), Bytes.toBytes(a._3))
+          println(a)
         }
 
         putsArray(i) = put

@@ -72,7 +72,7 @@ class BitAutoParser extends Parser{
         if(clickAndReply != null) {
           val t = NumExtractUtil.getNumArray(clickAndReply)
           put.addColumn(Bytes.toBytes("comment"), Bytes.toBytes("reply"), Bytes.toBytes(t(0)))
-          put.addColumn(Bytes.toBytes("comment"), Bytes.toBytes("view"), Bytes.toBytes(t(1)))
+          put.addColumn(Bytes.toBytes("comment"), Bytes.toBytes("click"), Bytes.toBytes(t(1)))
         }
         put.addColumn(Bytes.toBytes("comments"), Bytes.toBytes("topic"), Bytes.toBytes(topic))
 
