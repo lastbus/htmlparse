@@ -43,7 +43,7 @@ object SparkManagerFactor {
   def getHBaseConf(tableName: String, connType: String): Configuration ={
     val check = connType.equals(TableInputFormat.INPUT_TABLE) ||
                 connType.equals(TableOutputFormat.OUTPUT_TABLE)
-    if(!check){
+    if(check){
       if (hBaseConf == null) {
         hBaseConf = HBaseConfiguration.create()
         hBaseConf.addResource("hbase-site.xml")
