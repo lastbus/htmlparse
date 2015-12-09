@@ -58,12 +58,16 @@ object Main {
     val addToValue = (a: (String, String, String, String, String, Int) ,
                       b: (String, String, String, String, String)) => {
 //      val c0 = b._1
-      val c1 = if(a._2.toInt < b._2.toInt) b._2 else a._2
-      val c2 = if(a._3.toInt < b._3.toInt) b._3 else b._3
-      val c3 = if(a._4 > b._4) b._4 else a._4
-      val c4 = if(a._5 < b._4) b._4 else a._5
-      val c5 = a._6 + 1
-      (b._1, c1, c2, c3, c4, c5)
+      try{
+        val c1 = if(a._2.toInt < b._2.toInt) b._2 else a._2
+        val c2 = if(a._3.toInt < b._3.toInt) b._3 else b._3
+        val c3 = if(a._4 > b._4) b._4 else a._4
+        val c4 = if(a._5 < b._4) b._4 else a._5
+        val c5 = a._6 + 1
+        (b._1, c1, c2, c3, c4, c5)
+      } catch {
+        case e: Exception => {println(b);(" ", "", "", "", "", 0)}
+      }
     }
 
     val mergePartition = (a1: (String, String, String, String, String, Int),
