@@ -13,7 +13,7 @@ import scala.collection.mutable.ArrayBuffer
 @Test
 class RegexTest {
 
-  @Test
+//  @Test
   def run ={
     //QQ
     var pattern = Pattern.compile("http://club.auto.qq.com/t-[0-9]+-[0-9]+.htm[l]*")
@@ -86,6 +86,16 @@ class RegexTest {
   def run3 ={
     val t = "很低： jksdfjkd 112014-07-09"
         println(TimeUtil.getBitAutoTime(t))
+
+  }
+
+  @Test
+  def timeInterval = {
+    val time = "20((0[8-9])|1[0-6])" +
+      "((01.*)|(02.*)|(03.*)|(04((0.*)|(1.*)|(2[0-4]))))"
+    val regex = Pattern.compile(time)
+    println(regex.matcher("20150429").matches())
+
 
   }
 

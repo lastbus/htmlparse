@@ -15,19 +15,20 @@ class HBaseUtil {
 
   val config = HBaseConfiguration.create()
   config.addResource("hbase-site.xml")
+  config
   // Connections are heavyweight, create one once and keep it around.
   val connection = ConnectionFactory.createConnection(config)
 
 
-//  val filter = new SingleColumnValueFilter(
-//    cf,
-//    column,
-//    CompareOp.EQUAL,
-//    Bytes.toBytes("my value")
-//  )
   def table(tableName: String): Table ={
-    // before make sure the table exits
-    connection.getTable(TableName.valueOf(tableName))
+    val admin = connection.getAdmin
+    if(admin.tableExists(TableName.valueOf(tableName))){
+      // make sure the table exits
+      connection.getTable(TableName.valueOf(tableName))
+    } else{
+      null
+    }
+
   }
 
   def put(table: Table, put: Put): Int = {
@@ -54,15 +55,20 @@ class HBaseUtil {
 
   def scan(): Unit ={
     val scan = new Scan()
-    scan.addColumn(Bytes.toBytes("comments"), Bytes.toBytes("username"))
+
+    scan.addColumn(Bytes.toBytes("comments"), Bytes.toBytes("comment"))
     val scanner = table("hh").getScanner(scan)
     var rr: Result = null
-    while({rr = scanner.next(); rr!= null}){
-      println("Found row: " + rr)
+    try {
+      while ( {
+        rr = scanner.next(); rr != null
+      }) {
+        println("Found row: " + rr)
 
-
+      }
+    }finally {
+      scanner.close
     }
-
   }
 
 
