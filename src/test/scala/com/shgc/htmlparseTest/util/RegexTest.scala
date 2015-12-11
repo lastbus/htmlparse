@@ -89,13 +89,22 @@ class RegexTest {
 
   }
 
-  @Test
+//  @Test
   def timeInterval = {
     val time = "20((0[8-9])|1[0-6])" +
       "((01.*)|(02.*)|(03.*)|(04((0.*)|(1.*)|(2[0-4]))))"
     val regex = Pattern.compile(time)
     println(regex.matcher("20150429").matches())
 
+
+  }
+
+  @Test
+  def year = {
+    val pattern22 = Pattern.compile(".{8}2015.*")
+    val a = "23984934"
+    val b = "autohome|悦翔######|20091105221136|http://club.autohome.com.cn/bbs/thread-c-705-4826001-1.html|17"
+    assert(false,pattern22.matcher(b).matches())
 
   }
 

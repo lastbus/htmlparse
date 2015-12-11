@@ -1,5 +1,6 @@
 package com.shgc.analysis
 
+import com.shgc.excel.ReadExcel
 import com.shgc.htmlparse.util.SparkManagerFactor
 import org.apache.hadoop.hbase.HBaseConfiguration
 import org.apache.hadoop.hbase.client.{Scan, Result}
@@ -10,10 +11,11 @@ import org.apache.hadoop.hbase.util.{Base64, Bytes}
 import org.apache.spark.SparkContext
 
 import scala.Predef
+import scala.collection.mutable.ArrayBuffer
 
 /**
  *
- * 输入参数： Array[Array[String]]
+ * 输入参数：
  * Created by make on 2015/12/9.
  */
 object Analyze {
@@ -23,11 +25,16 @@ object Analyze {
 
   def main(args: Array[String]): Unit ={
 
-    if(args.length < 1){
-      println("please input table name")
+    if(args.length < 2){
+      println("please input table name and file-path")
       System.exit(-1)
     }
+    val names = Array(("产品关注点", 3), ("服务关注点", 2), ("品牌关注点", 3))
+    val path = ""
+    val readExcel = new ReadExcel
+    val data = readExcel.read(args(1),names)
     val sc = SparkManagerFactor.getSparkContext(this.getClass.getName)
+    val dataBroadcast = sc.broadcast(data)
 
 //    val hBaseScanTest = HBaseSparkUtil.getWebsiteRDD(sc, "autohome", "hh", "comments", "comment")
 //    println(s"autohome:  " + hBaseScanTest.count())
@@ -35,11 +42,36 @@ object Analyze {
 //    val hBaseCarTypeTest = HBaseSparkUtil.getCarTypeRDD(sc, "奔奔", "hh", "comments", "comment")
 //    println(s"奔奔:  " + hBaseCarTypeTest.count())
 //
-//    val hBaseTimeIntervalTest = HBaseSparkUtil.getTimeInterval(sc, ".*2015.*", "hh", "comments", "comment")
+    val hBaseTimeIntervalTest = HBaseSparkUtil.getTimeInterval(sc, ".*|2015.*", "hh", "comments", "comment")
 //    println(s"2015:  ${hBaseTimeIntervalTest.count()}")
 
-    val hBaseSelect = HBaseSparkUtil.select(sc, "hh", "comments", "comment", carType = "奔奔", website = "autohome", timeIntervalRegex = ".*2015.*")
-    println("select: " + hBaseSelect.count())
+//    val hBaseSelect = HBaseSparkUtil.select(sc, "hh", "comments", "comment", carType = "奔奔", website = "autohome", timeIntervalRegex = ".*2015.*")
+//        println("select: " + hBaseSelect.count())
+
+    val a = hBaseTimeIntervalTest.map{case (url, comment) =>{
+      val array = dataBroadcast.value
+      val arrayBuffer = new ArrayBuffer[(String, String, Int)]
+      for(map <- array){
+        for((key, value) <- map){
+          var has = false
+          for(s <- value if(!has)) if(comment.contains(s)) has = true
+          if(has) arrayBuffer += ((url, key, 1))
+        }
+      }
+      if(arrayBuffer.size > 0) arrayBuffer else null
+    }}.filter(_ != null).flatMap(d => d)
+    a.cache()
+    a.saveAsTextFile("/user/hdfs/temp2/analyze")
+
+    a.map{case (url, feature, num) => (feature, num)}.reduceByKey((f1, f2) => f1 + f2).
+      saveAsTextFile("/user/hdfs/temp2/analyzeSum")
+
+    a.unpersist()
+
+    sc.stop()
+
+
+
   }
 
   def test(sc: SparkContext): Unit = {

@@ -83,7 +83,8 @@ object HBaseSparkUtil extends Serializable{
    * @param tableName
    * @return
    */
-  def getTimeInterval(sc: SparkContext, timeIntervalRegex: String, tableName: String, columnFamily: String, column: String): RDD[(String, String)] ={
+  def getTimeInterval(sc: SparkContext, timeIntervalRegex: String,
+                      tableName: String, columnFamily: String, column: String): RDD[(String, String)] ={
     val scan = new Scan()
     val columnFamilyBytes  = Bytes.toBytes(columnFamily)
     val columnBytes = Bytes.toBytes(column)
