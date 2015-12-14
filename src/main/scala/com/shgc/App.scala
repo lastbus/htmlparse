@@ -25,6 +25,8 @@ object App  {
     val complex = new Complex(1,3)
     println(s"real: ${complex.real}, imaginary: ${complex.imaginary}")
 
+    val s = "123456"
+    println(s.substring(s.length - 3))
   }
 
 

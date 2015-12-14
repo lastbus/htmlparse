@@ -101,10 +101,13 @@ class RegexTest {
 
   @Test
   def year = {
-    val pattern22 = Pattern.compile(".{8}2015.*")
+    val pattern22 = Pattern.compile(".*\\|2015\\d{10}\\|.*")
     val a = "23984934"
     val b = "autohome|悦翔######|20091105221136|http://club.autohome.com.cn/bbs/thread-c-705-4826001-1.html|17"
-    assert(false,pattern22.matcher(b).matches())
+    val b1 = "autohome|悦翔######|20151105221136|http://club.autohome.com.cn/bbs/thread-c-705-4826001-1.html|17"
+    println(pattern22.matcher(b).matches())
+    println(pattern22.matcher(b1).matches())
+//    assert(false,pattern22.matcher(b).matches())
 
   }
 

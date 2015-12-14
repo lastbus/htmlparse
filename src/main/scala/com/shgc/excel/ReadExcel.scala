@@ -28,6 +28,7 @@ class ReadExcel {
   def run(wb: Workbook, sheetName: String, headColumn: Int): Map[String, Array[String]] ={
 
 
+//    println(sheetName)
     val sheet = wb.getSheet(sheetName)
     val num = sheet.getRow(0).getLastCellNum
     //读取头部
@@ -68,9 +69,9 @@ class ReadExcel {
         val keyBuilder = new StringBuilder()
         for(j <- 0 until headColumn){
           keyBuilder.append(getString(heads(j), i))
-          if(j != headColumn - 1) keyBuilder.append(":")
+          if(j != headColumn - 1) keyBuilder.append(",")
         }
-        val key = keyBuilder.toString()
+        val key = keyBuilder.toString() + "," + sheetName.substring(sheetName.length - 3)
         if(rowN(i) != null) sheetMap(key) = rowN(i).split("[;；]").filter(d => d.length > 0)
       }
     }

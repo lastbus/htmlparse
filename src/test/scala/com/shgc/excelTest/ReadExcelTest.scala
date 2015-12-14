@@ -20,7 +20,7 @@ class ReadExcelTest {
   @Test
   def readTest = {
     val readExcel = new ReadExcel
-    val names = Array(("产品关注点", 3), ("服务关注点", 2), ("品牌关注点", 3))
+    val names = Array(("产品关注点", 3), ("车主对产品的满意点", 3), ("车主对产品的抱怨点", 3), ("服务关注点", 2), ("品牌关注点", 3))
     val sheets = readExcel.read("E:2015年长安乘用车BTS-乘用车词库-1120.xlsx", names)
     if(sheets != null){
       for(sheet <- sheets){
