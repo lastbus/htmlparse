@@ -27,6 +27,9 @@ object App  {
 
     val s = "123456"
     println(s.substring(s.length - 3))
+    val hh = "autohome|众泰T600##|20141021071709|http://club.autohome.com.cn/bbs/thread-c-2334-34779473-1.html|0"
+    println(hh.split("\\|")(1))
+
   }
 
 
