@@ -17,7 +17,7 @@ object CarTypeFromHBase {
     val data = sc.newAPIHadoopRDD(hBaseConf, classOf[TableInputFormat],
       classOf[ImmutableBytesWritable], classOf[Result]).map(d => {
       val key = new String(d._2.getRow).split("\\|")
-      (key(0), key(1).replace("#", "").trim)
+      (key(0).trim, key(1).replace("#", "").trim)
     }).distinct().coalesce(1).saveAsTextFile("/user/hdfs/temp2/car-type")
 
 

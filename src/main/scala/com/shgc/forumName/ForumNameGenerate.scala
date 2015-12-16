@@ -14,6 +14,18 @@ object ForumNameGenerate {
   def main(args: Array[String]): Unit ={
     val xml = DocumentHelper.parseText(initXML())
 
+    val pcAutoArray = (new CarNamePCAuto).get("http://www.pcauto.com.cn/forum/sitemap/pp/")
+    for(car <- pcAutoArray){
+      insertVehicle(xml, car._1, car._2)
+    }
+
+    val xCarArray = (new CarNameXCar).get("http://www.xcar.com.cn/bbs/")
+    for(car <- xCarArray){
+      insertVehicle(xml, car._1, car._2)
+    }
+
+    val qqCarArray = (new CarNameTencent).get("http://club.auto.qq.com/forum.php?gid=3")
+    for(car <- qqCarArray) insertVehicle(xml, car._1, car._2)
 
 
     val writer = new XMLWriter(new FileWriter("output.xml"))
@@ -29,6 +41,7 @@ object ForumNameGenerate {
     val doc = Jsoup.connect(url).get()
     val cars = doc.select("#tab-4 .forum-tab-box .forum-brand-box p").iterator()
     val automobile = doc.select("#tab-4 .forum-tab-box .forum-brand-box ul").iterator()
+    var count = 0
 
     val sb = new StringBuilder
     sb.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>")
@@ -49,12 +62,13 @@ object ForumNameGenerate {
         sb.append(temp.replace("论坛", ""))
         sb.append("</name>")
         sb.append("\n")
+        count += 1
       }
       sb.append("\t</vehicle>")
       sb.append("\n")
     }
     sb.append("</vehicles>")
-
+    println(s"autohome: ${count}")
     sb.toString()
   }
 
