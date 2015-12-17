@@ -4,6 +4,7 @@ import java.io.{FileWriter, FileOutputStream}
 import org.dom4j.{Document, Element, DocumentHelper}
 import org.dom4j.io.{XMLWriter, SAXReader}
 import org.jsoup.Jsoup
+//import com.shgc.forumName.CarNameSohu
 
 
 
@@ -14,18 +15,7 @@ object ForumNameGenerate {
   def main(args: Array[String]): Unit ={
     val xml = DocumentHelper.parseText(initXML())
 
-    val pcAutoArray = (new CarNamePCAuto).get("http://www.pcauto.com.cn/forum/sitemap/pp/")
-    for(car <- pcAutoArray){
-      insertVehicle(xml, car._1, car._2)
-    }
-
-    val xCarArray = (new CarNameXCar).get("http://www.xcar.com.cn/bbs/")
-    for(car <- xCarArray){
-      insertVehicle(xml, car._1, car._2)
-    }
-
-    val qqCarArray = (new CarNameTencent).get("http://club.auto.qq.com/forum.php?gid=3")
-    for(car <- qqCarArray) insertVehicle(xml, car._1, car._2)
+    test(xml)
 
 
     val writer = new XMLWriter(new FileWriter("output.xml"))
@@ -34,6 +24,18 @@ object ForumNameGenerate {
 
   }
 
+
+  def test(xml: Document): Unit = {
+    val websiteManager = new WebsiteManager(xml)
+    websiteManager.addWebsite((new CarNamePCAuto).get("http://www.pcauto.com.cn/forum/sitemap/pp/")).
+      addWebsite((new CarNameXCar).get("http://www.xcar.com.cn/bbs/")).
+      addWebsite((new CarNameTencent).get("http://club.auto.qq.com/forum.php?gid=3")).
+      addWebsite((new CarNameBitAuto).get("http://baa.bitauto.com/foruminterrelated/brandforumlist_by_pinpai.html")).
+//      addWebsite((new CarNameSohu).get("http://saa.auto.sohu.com/search/clublist.shtml")).
+      addWebsite((new CarNameSina).get("http://bbs.auto.sina.com.cn/"))
+
+    websiteManager.execute()
+  }
 
   def initXML(): String = {
     // http://club.autohome.com.cn
@@ -97,7 +99,7 @@ object ForumNameGenerate {
 
   }
 
-  implicit def javaList2ScalaList(list: java.util.List[_]): Array[_] = {
+  def javaList2ScalaList(list: java.util.List[_]): Array[_] = {
     if (list.size() == 0) return null
     val array = new Array[Any](list.size())
     for(i <- 0 until list.size()){
@@ -105,5 +107,6 @@ object ForumNameGenerate {
     }
     array
   }
+
 
 }

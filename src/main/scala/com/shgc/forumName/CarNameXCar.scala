@@ -14,13 +14,14 @@ class CarNameXCar extends GetCarName{
     for (i <- 0 until lists.size){
       val element = lists.get(i).select("tbody tr")
       val carType = element.select("td:eq(0) a:last-child").text().trim
+      val carType2 = if(carType.endsWith("汽车")) carType.substring(0, carType.indexOf("汽车")) else carType
       val cars = element.select("td:eq(1) .t1203_fbox")
       val carNameArray = new Array[String](cars.size())
       for (j <- 0 until cars.size()){
         carNameArray(j) = cars.get(j).select("a").text().replace("论坛", "").trim
         count +=  1
       }
-      carTypeAndCarNameArray(i) = (carType, carNameArray)
+      carTypeAndCarNameArray(i) = (carType2, carNameArray)
     }
     println(s"xcar type: ${lists.size()}")
     println(s"xcar count: ${count}")

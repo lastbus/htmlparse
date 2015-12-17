@@ -22,6 +22,7 @@ class CarNameTencent extends GetCarName{
     for(i <- 0 until lists.size){
       val element = lists.get(i).select("td:eq(1)")
       val carType = element.select("h2 a").text().trim
+      val carType2 = if(carType.endsWith("汽车")) carType.substring(0, carType.indexOf("汽车")) else carType
       val cars = element.select("p:contains(子版块) a")
       val carsArray = new Array[String](cars.size())
       for(j <- 0 until cars.size()){
@@ -29,7 +30,7 @@ class CarNameTencent extends GetCarName{
         carsArray(j) = if(temp.endsWith("车友会")) null else temp
         count += 1
       }
-      carTypeAndCarNameArray(i) = (carType, carsArray.filter(_ != null))
+      carTypeAndCarNameArray(i) = (carType2, carsArray.filter(d => d != null && d.length > 0))
     }
     println(s"tencent carType: ${lists.size}")
     println(s"tencent car number: ${count}")
