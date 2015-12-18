@@ -12,7 +12,7 @@ import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
 /**
- * Created by Administrator on 2015/12/10.
+ * Created by make on 2015/12/10.
  */
 object HBaseSparkUtil extends Serializable{
   val hBaseConf = HBaseConfiguration.create()
@@ -51,18 +51,49 @@ object HBaseSparkUtil extends Serializable{
   }
 
   /**
+   *
+   * @param sc
+   * @param vehicleBand
+   * @param tableName
+   * @param columnFamily
+   * @param column
+   * @return
+   */
+  def getVehicleBandRDD(sc: SparkContext, vehicleBand: String, tableName: String, columnFamily: String, column: String): RDD[(String, String)] ={
+    val vehicle = "^.*\\|" + vehicleBand + "\\|.+\\|2015\\d{10}\\|.*"
+    val scan = new Scan()
+    val columnFamilyBytes  = Bytes.toBytes(columnFamily)
+    val columnBytes = Bytes.toBytes(column)
+    scan.addColumn(columnFamilyBytes, columnBytes)
+    val comp = new RegexStringComparator(vehicle)
+    val filter = new RowFilter(CompareOp.EQUAL, comp)
+    scan.setFilter(filter)
+    hBaseConf.set(TableInputFormat.SCAN, convertScanToString(scan))
+    hBaseConf.set(TableInputFormat.INPUT_TABLE, tableName)
+    sc.newAPIHadoopRDD(hBaseConf, classOf[TableInputFormat],
+      classOf[ImmutableBytesWritable], classOf[Result]).
+      map(d =>{
+        val key = d._2.getRow
+        val value = d._2.getValue(columnFamilyBytes, columnBytes)
+        if(key != null && value != null)(new String(key), new String(value)) else null
+      })
+  }
+
+  /**
    * 取出某一车型的所有数据
    * @param sc
    * @param carType
    * @param tableName
    * @return
    */
-  def getCarTypeRDD(sc: SparkContext, carType: String, tableName: String, columnFamily: String, column: String): RDD[(String, String)] ={
+  def getCarTypeRDD(sc: SparkContext,vehicleBand: String, carType: String,
+                    tableName: String, columnFamily: String, column: String): RDD[(String, String)] ={
+    val carName = "^.*\\|" + vehicleBand + "\\|" + carType + "\\|2015\\d{10}\\|.*"
     val scan = new Scan()
     val columnFamilyBytes  = Bytes.toBytes(columnFamily)
     val columnBytes = Bytes.toBytes(column)
     scan.addColumn(columnFamilyBytes, columnBytes)
-    val comp = new SubstringComparator(carType)
+    val comp = new RegexStringComparator(carName)
     val filter = new RowFilter(CompareOp.EQUAL, comp)
     scan.setFilter(filter)
     hBaseConf.set(TableInputFormat.SCAN, convertScanToString(scan))

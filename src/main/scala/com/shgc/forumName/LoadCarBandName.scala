@@ -4,6 +4,7 @@ import org.dom4j.io.SAXReader
 import org.dom4j.Element
 
 import scala.collection.mutable
+import scala.collection.mutable.ArrayBuffer
 
 /**
  * Created by Administrator on 2015/12/17.
@@ -37,6 +38,7 @@ object LoadCarBandName{
 //    val test = new LoadCarBandName("output.xml")
 //    println(test.typeBandMap.size)
     val test2 = loadAutoHome()
+    println(test2.size)
 //    for((key, value) <- test2){
 //      println(key + "  " + value)
 //    }
@@ -46,21 +48,20 @@ object LoadCarBandName{
   def loadAutoHome(): Map[String, String] ={
     val cars = (new CarNameAutoHome).get("http://club.autohome.com.cn")
     val bandAndCarType = new mutable.HashMap[String, String]
+    val removeArray = new ArrayBuffer[String]()
     var count = 0
     for(car <- cars){
-      for(c <- car._2){
+      for(c <- car._2 if(c.length > 0)){
+        count += 1
         if(bandAndCarType.getOrElse(c, null) != null){
-          println(s"conflict: ${c}   " + bandAndCarType(c))
-          println(s"${c} : ${car._1}")
+          println(s"conflict: (${c} ,${bandAndCarType(c)}), (${c}, ${car._1})")
+          removeArray += c
         }else{
           bandAndCarType(c) = car._1
         }
-
       }
     }
-    if(count != bandAndCarType.size){
-      println("There are conflict!")
-    }
-    bandAndCarType.toMap
+    println(s"numbers: ${count}")
+    bandAndCarType.filter(keyValue => !removeArray.contains(keyValue._1)).toMap
   }
 }

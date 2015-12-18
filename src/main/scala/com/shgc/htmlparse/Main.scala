@@ -4,6 +4,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.regex.Pattern
 
+import com.shgc.forumName.LoadCarBandName
 import com.shgc.htmlparse.parse.{AutoHomeParser, ParserFactory, Parser}
 import com.shgc.htmlparse.util.{Selector, ParseConfiguration, SparkManagerFactor}
 import org.apache.hadoop.conf.Configuration
@@ -25,7 +26,7 @@ import scala.xml.XML
 /**
  * Created by make on 2015/11/18.
  */
-object Main{
+object Main {
   val LOG = LogManager.getLogger(this.getClass.getName)
 
   def main(args: Array[String]): Unit ={
@@ -35,7 +36,6 @@ object Main{
     println(s"=============#### program begins at: ${sdf.format(timeStart)} ###==============")
 
     run(args)
-//    testHBase()
 
     println("\ntime taken: " + (new Date().getTime - timeStart.getTime) / 1000 + " seconds\n\n")
     System.exit(0)
@@ -66,22 +66,12 @@ object Main{
     val table = args(1)
 
     val parser = ParserFactory.createParseMap()
-    val selector = new Selector() //just for invocation method
-    val sc = SparkManagerFactor.getSparkContext(this.getClass.getName)
 
+    val selector = new Selector() //just for invocation method
+
+    val sc = SparkManagerFactor.getSparkContext(this.getClass.getName)
     val rawDataRDD = sc.sequenceFile[Text, Content](path)
     println(s"input html num: ${rawDataRDD.count()}")
-//    rawDataRDD.cache()
-
-//    val autoHome = Pattern.compile("http://club.autohome.com.cn/bbs/thread-[a-z]+-\\d+-\\d+-\\d+.htm[l]*")
-//    val autoHomeParse = new AutoHomeParser
-//    val b = rawDataRDD.map(doc => {
-//      if(autoHome.matcher(doc._1.toString).matches()) {
-//          autoHomeParse.run(doc._2, selector)
-//      }else null
-//    })
-//    println(s"autohome : ${b.count()}")
-
     val b = rawDataRDD.map{case(url, content) =>{
       var pars: Parser = null
       for((urlPattern, p) <- parser){
@@ -97,8 +87,6 @@ object Main{
       }
     }}
     val c = b.filter(puts => puts != null)
-
-//    rawDataRDD.unpersist()
     c.cache()
     println(s"html after filter: ${c.count()}")
 

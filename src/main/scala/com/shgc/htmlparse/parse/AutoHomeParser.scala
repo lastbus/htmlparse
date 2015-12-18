@@ -16,71 +16,15 @@ import org.jsoup.select.Elements
 import scala.collection.mutable.ArrayBuffer
 
 /**
- * Created by Administrator on 2015/11/20.
+ * Created by make on 2015/11/20.
  */
 class AutoHomeParser extends Parser {
   @transient val LOG = LogManager.getLogger(this.getClass.getName)
   var urlMap: Map[Pattern, Selector] = null
-
-  //  override def run(content: Content, selector: Selector): Array[Put] = {
-  //    val html = new String(content.getContent, selector.encoding)
-  //    val url = content.getUrl
-  //    val keys = selector.keys
-  //    val doc = Jsoup.parse(html)
-  //    val separator = selector.separator
-  //
-  //    val sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
-  //    val sdf2 = new SimpleDateFormat("yyyyMMddHHmmss")
-  //
-  //    var floor: String = null
-  //    val list = doc.select(selector.body)
-  //    val putsArrayBuffer = new ArrayBuffer[Put]
-  //    for(element <- elements2List(list)){
-  //      //将取出的值放入一个临时的 ArrayBuffer 中
-  //      val values = new ArrayBuffer[(String, String, String)]
-  //
-  //      for((select, columnFamily, column) <- selector.select){
-  //        values += ((columnFamily, column, element.select(select).text()))
-  //        if(column.equalsIgnoreCase("FLOOR")) floor = formatFloor(values.last._3)
-  //      }
-  //
-  //      //一种情况是回复别人，另一种是发言
-  //      if(element.select(selector.strategySelector(0)(0)._1).text() != null) {
-  //        for (sel <- selector.strategySelector(0)) {
-  //          values += ((sel._2, sel._3, element.select(sel._1).text()))
-  //        }
-  //      }else{
-  //        for(sel <- selector.strategySelector(1)){
-  //          values += ((sel._2, sel._3, element.select(sel._1).text()))
-  //        }
-  //      }
-  //      val host = new URL(url).getHost
-  //      val keyBuffer = new StringBuilder(host + separator)
-  //      //生成主键
-  //      for(key <- keys){
-  //        for(col <- values if (col._2.equalsIgnoreCase(key))){
-  //          if(key.equalsIgnoreCase("TIME")){
-  //            keyBuffer.append(sdf2.format(sdf.parse(col._3)) + separator)
-  //          } else if(key.equalsIgnoreCase("CARTYPE")){
-  //            keyBuffer.append(col._3.substring(0, col._3.length - 2) + separator)
-  //          }else keyBuffer.append(col._3 + separator)
-  //        }
-  //      }
-  //      val k = keyBuffer.append(url).append(floor)
-  //      //make the Put
-  //      val put = new Put(Bytes.toBytes(keyBuffer.toString()))
-  //      for((columnFamily, column, value) <- values){
-  //        put.addColumn(Bytes.toBytes(columnFamily), Bytes.toBytes(column), Bytes.toBytes(value))
-  //      }
-  //      putsArrayBuffer += put
-  //    }
-  //    putsArrayBuffer.toArray
-  //
-  //    null
-  //  }
-
+  var vehicleBandMap: Map[String, String] = null
 
   override def run(content: Content, selector: Selector): Array[Put] = {
+    if(vehicleBandMap == null || vehicleBandMap.size == 0) return null
       val metaData = content.getMetadata.get("Content-Type").split("=")
       val encoding = if(metaData.length > 1) metaData(1) else "gb2312"  // 得到网页的编码
       val html = new String(content.getContent, encoding)
@@ -88,8 +32,9 @@ class AutoHomeParser extends Parser {
       val doc = Jsoup.parse(html)
 
       var temp: String = null
-      temp = doc.select("#a_bbsname").text().split(" ")(0)
-      val carType = if(temp != null && temp.length > 2) temp.substring(0, temp.length - 2) else null
+      temp = doc.select("#a_bbsname").text().trim
+      val carType = if(temp.contains("论坛")) temp.substring(0, temp.indexOf("论坛")).trim else null
+      val vehicleBand = vehicleBandMap.getOrElse(carType, "unknown")
       temp = doc.select("#x-views").text()
       val click = if(temp != null  && temp.length > 0) temp else null
       temp = doc.select("#x-replys").text()
@@ -97,14 +42,12 @@ class AutoHomeParser extends Parser {
       //帖名
       val problem = doc.select("#consnav span")
       val topic = if(problem != null && problem.size > 0 ) problem.last().text() else null
-
       val body = doc.select("body #topic_detail_main #content #cont_main div[id^=maxwrap] div[id^=F]")
       val putsArray = new Array[Put](body.size)
     //    try {
       var i = 0
       for (b <- elements2List(body)) {
         val arr = new Array[(String, String, String)](17)
-
         temp = b.select("[class=txtcenter fw]").text().trim
         arr(0) = if (temp != null && temp.length > 0) ("comments", "username", temp) else null  //username
         temp = b.select(".lv-txt").text().trim
@@ -158,7 +101,7 @@ class AutoHomeParser extends Parser {
           }
         }
         if(arr(10) != null && arr(10)._3 != null){
-          val key = "autohome"  + "|" + carType + "#" * (8 - carType.length) + "|" +
+          val key = "autohome"  + "|" + vehicleBand + "|" + carType + "|" +
             arr(9)._3 + "|" + url + "|" + arr(10)._3
 
           val put = new Put((Bytes.toBytes(key)))

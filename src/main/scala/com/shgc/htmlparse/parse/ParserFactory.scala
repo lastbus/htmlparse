@@ -2,6 +2,7 @@ package com.shgc.htmlparse.parse
 
 import java.util.regex.Pattern
 
+import com.shgc.forumName.LoadCarBandName
 import com.shgc.htmlparse.util.ParseConfiguration
 
 import scala.collection.mutable
@@ -52,13 +53,18 @@ object ParserFactory extends Serializable{
 
     val parseMap = mutable.HashMap.empty[Pattern, Parser]
 
-    parseMap(autoHome) = new AutoHomeParser
-    parseMap(bitAuto) = new BitAutoParser
-    parseMap(pCAuto) = new PCAutoParser
-    parseMap(xCar) = new XCarParser
-    parseMap(xinLang) = new XinLangParser
-    parseMap(soHu) = new SoHuParse
-    parseMap(QQ) = new QQParse
+    val autoHomeParse = new AutoHomeParser
+    val vehicleBandType = LoadCarBandName.loadAutoHome()
+    autoHomeParse.vehicleBandMap = vehicleBandType
+    parseMap(autoHome) = autoHomeParse
+
+
+//    parseMap(bitAuto) = new BitAutoParser
+//    parseMap(pCAuto) = new PCAutoParser
+//    parseMap(xCar) = new XCarParser
+//    parseMap(xinLang) = new XinLangParser
+//    parseMap(soHu) = new SoHuParse
+//    parseMap(QQ) = new QQParse
 
     parseMap.toMap
   }

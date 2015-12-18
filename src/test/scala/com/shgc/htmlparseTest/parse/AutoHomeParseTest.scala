@@ -20,13 +20,14 @@ class AutoHomeParseTest {
 
   @Test
   def testRun = {
-    val url = "http://club.autohome.com.cn/bbs/thread-c-2334-34779473-1.html"
+    val url = "http://club.autohome.com.cn/bbs/thread-c-3050-40932595-1.html"
     val html = Jsoup.connect(url).get().toString
     val doc = Jsoup.parse(html)
 
     var temp: String = null
-    temp = doc.select("#a_bbsname").text().split(" ")(0)
-    val carType = if(temp != null && temp.length > 2) temp.substring(0, temp.length - 2) else null
+    temp = doc.select("#a_bbsname").text().trim
+    val carType = if(temp.contains("论坛")) temp.substring(0, temp.indexOf("论坛")).trim else null
+
     temp = doc.select("#x-views").text()
     val click = if(temp != null  && temp.length > 0) temp else null
     temp = doc.select("#x-replys").text()
@@ -98,7 +99,7 @@ class AutoHomeParseTest {
       if(arr(9) != null && arr(10) != null && arr(9)._3 != null && arr(10)._3 != null){
         val key = "autohome"  + "|" + carType + "#" * (8 - carType.length) + "|" +
           arr(9)._3 + "|" + url + "|" + arr(10)._3
-
+        println(key)
         val put = new Put((Bytes.toBytes(key)))
 
         if (click != null && click.length > 0) put.addColumn(Bytes.toBytes("comments"), Bytes.toBytes("click"), Bytes.toBytes(click))
