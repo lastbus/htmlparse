@@ -14,7 +14,11 @@ import org.jsoup.Jsoup
  */
 class SoHuParse extends Parser{
 
+  var vehicleBandAndCarType: Map[String, String] = null
+  val columnFamily = Bytes.toBytes("comments")
+
   override def run(content: Content, selector: Selector): Array[Put] = {
+    if(vehicleBandAndCarType == null || vehicleBandAndCarType.size == 0) return null
     val  contentType = content.getMetadata.get("Content-Type").split("=")
     val encoding = if(contentType.length > 1) contentType(1) else "gbk"
     val url = content.getUrl
@@ -23,7 +27,8 @@ class SoHuParse extends Parser{
     var temp: String = null
 //    try {
       val luntan = doc.select("body .wapper980 .conmain .con-head h1 a").text().trim
-      val carType = luntan.substring(0, luntan.length - 3)
+      val carType = if(luntan.contains("车友会")) luntan.substring(0, luntan.indexOf("车友会")) else luntan
+      val vehicle = vehicleBandAndCarType.getOrElse(carType, "unknown-sohu")
       val problem = doc.select("body .wapper980 .conmain .con-head h1").text().trim.split(" ")
       val topic = problem(problem.size - 1)
 
@@ -63,21 +68,25 @@ class SoHuParse extends Parser{
 
         val time = arr(5)._3
 
-        val key = "sohu" + " " * 4 + "|" + carType + "#" * (8 - carType.length) + "|" + time +
+        val key = "sohu" + "|" + vehicle + "|" + carType + "|" + time +
           "|" + url + "|" + arr(6)._3
 
         val put = new Put(Bytes.toBytes(key))
         if (topic != null && topic.length > 0) {
-          put.addColumn(Bytes.toBytes("comments"),
+          put.addColumn(columnFamily,
             Bytes.toBytes("topic"), Bytes.toBytes(topic))
         }
         if (clickAndView != null && clickAndView.length > 0) {
           val clickView = NumExtractUtil.getNumArray(clickAndView)
           if(clickAndView != null && clickAndView.length == 2) {
-            put.addColumn(Bytes.toBytes("comments"), Bytes.toBytes("reply"), Bytes.toBytes(clickView(0)))
-            put.addColumn(Bytes.toBytes("comments"), Bytes.toBytes("view"), Bytes.toBytes(clickView(1)))
+            put.addColumn(columnFamily, Bytes.toBytes("reply"), Bytes.toBytes(clickView(0)))
+            put.addColumn(columnFamily, Bytes.toBytes("view"), Bytes.toBytes(clickView(1)))
           }
         }
+
+        put.addColumn(columnFamily, Bytes.toBytes("chexing"), Bytes.toBytes(carType))
+        put.addColumn(columnFamily, Bytes.toBytes("pinpai"), Bytes.toBytes(vehicle))
+
         for (a <- arr if a != null && a._3.length > 0) {
           put.addColumn(Bytes.toBytes(a._1), Bytes.toBytes(a._2), Bytes.toBytes(a._3))
         }

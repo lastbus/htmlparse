@@ -22,6 +22,7 @@ class AutoHomeParser extends Parser {
   @transient val LOG = LogManager.getLogger(this.getClass.getName)
   var urlMap: Map[Pattern, Selector] = null
   var vehicleBandMap: Map[String, String] = null
+  val columnFamily = Bytes.toBytes("comments")
 
   override def run(content: Content, selector: Selector): Array[Put] = {
     if(vehicleBandMap == null || vehicleBandMap.size == 0) return null
@@ -34,7 +35,7 @@ class AutoHomeParser extends Parser {
       var temp: String = null
       temp = doc.select("#a_bbsname").text().trim
       val carType = if(temp.contains("论坛")) temp.substring(0, temp.indexOf("论坛")).trim else null
-      val vehicleBand = vehicleBandMap.getOrElse(carType, "unknown")
+      val vehicleBand = vehicleBandMap.getOrElse(carType, "unknown-autohome")
       temp = doc.select("#x-views").text()
       val click = if(temp != null  && temp.length > 0) temp else null
       temp = doc.select("#x-replys").text()
@@ -106,9 +107,12 @@ class AutoHomeParser extends Parser {
 
           val put = new Put((Bytes.toBytes(key)))
 
-          if (click != null && click.length > 0) put.addColumn(Bytes.toBytes("comments"), Bytes.toBytes("click"), Bytes.toBytes(click))
-          if (replay != null && replay.length > 0) put.addColumn(Bytes.toBytes("comments"), Bytes.toBytes("replay"), Bytes.toBytes(replay))
-          if(topic != null  && topic.length > 0) put.addColumn(Bytes.toBytes("comments"), Bytes.toBytes("topic"), Bytes.toBytes(topic))
+          if (click != null && click.length > 0) put.addColumn(columnFamily, Bytes.toBytes("click"), Bytes.toBytes(click))
+          if (replay != null && replay.length > 0) put.addColumn(columnFamily, Bytes.toBytes("replay"), Bytes.toBytes(replay))
+          if(topic != null  && topic.length > 0) put.addColumn(columnFamily, Bytes.toBytes("topic"), Bytes.toBytes(topic))
+
+          put.addColumn(columnFamily, Bytes.toBytes("chexing"), Bytes.toBytes(carType))
+          put.addColumn(columnFamily, Bytes.toBytes("pinpai"), Bytes.toBytes(vehicleBand))
 
           for (a <- arr if a != null && a._3 != null) {
             put.addColumn(Bytes.toBytes(a._1), Bytes.toBytes(a._2), Bytes.toBytes(a._3))

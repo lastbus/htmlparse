@@ -8,7 +8,7 @@ import com.shgc.htmlparse.util.ParseConfiguration
 import scala.collection.mutable
 
 /**
- * Created by Administrator on 2015/11/19.
+ * Created by make on 2015/11/19.
  */
 object ParserFactory extends Serializable{
   private[this] var forumParser: Qy58Parser = null
@@ -54,17 +54,30 @@ object ParserFactory extends Serializable{
     val parseMap = mutable.HashMap.empty[Pattern, Parser]
 
     val autoHomeParse = new AutoHomeParser
-    val vehicleBandType = LoadCarBandName.loadAutoHome()
-    autoHomeParse.vehicleBandMap = vehicleBandType
+    autoHomeParse.vehicleBandMap = LoadCarBandName.loadAutoHome
     parseMap(autoHome) = autoHomeParse
 
+    val bitAutoParse = new BitAutoParser
+    bitAutoParse.vehicleAndType = LoadCarBandName.loadBitAuto
+    parseMap(bitAuto) = bitAutoParse
 
-//    parseMap(bitAuto) = new BitAutoParser
-//    parseMap(pCAuto) = new PCAutoParser
-//    parseMap(xCar) = new XCarParser
-//    parseMap(xinLang) = new XinLangParser
-//    parseMap(soHu) = new SoHuParse
-//    parseMap(QQ) = new QQParse
+    val pcAutoParse = new PCAutoParser
+    pcAutoParse.vehicleBandAndType = LoadCarBandName.loadPcAuto
+    parseMap(pCAuto) = pcAutoParse
+
+    val xCarParse = new XCarParser
+    xCarParse.vehicleBandAndCarType = LoadCarBandName.loadXCar
+    parseMap(xCar) = xCarParse
+
+    val xinLangParse = new XinLangParser
+    xinLangParse.vehicleBandAndCarType = LoadCarBandName.loadSina
+    parseMap(xinLang) = xinLangParse
+
+    val soHuParse = new SoHuParse
+    soHuParse.vehicleBandAndCarType = LoadCarBandName.loadSoHu
+    parseMap(soHu) = soHuParse
+
+    parseMap(QQ) = new QQParse
 
     parseMap.toMap
   }

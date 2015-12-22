@@ -24,16 +24,17 @@ class PCAuto {
 
   @Test
   def runTest = {
-    val url = "http://bbs.pcauto.com.cn/topic-8964602-2.html"
+    val url = "http://bbs.pcauto.com.cn/topic-9445409.html"
     val html = Jsoup.connect(url).get().html()
     val doc = Jsoup.parse(html)
 
     var temp: String = null
     val luntan = doc.select("#content .com-subHead .com-crumb a:eq(6)").text()
+    val vehicle = doc.select("#content .com-subHead .com-crumb a:eq(4)").text()
     val view = doc.select("#views").text()
     val replay = doc.select(".overView span").last().text()
     val title = doc.select(".post_right .post_r_tit .yh").text()
-    println(luntan + ":" + view + " : " + replay + " : " + title )
+    println(vehicle + " ==  " + luntan + ":" + view + " : " + replay + " : " + title )
     val lists = doc.select("#post_list .postids")
     val puts = new Array[Put](lists.size())
     for(list <- elements2List(lists)){

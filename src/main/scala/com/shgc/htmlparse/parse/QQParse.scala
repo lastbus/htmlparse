@@ -14,6 +14,7 @@ import org.jsoup.Jsoup
  */
 class QQParse extends Parser{
 
+  val columnFamily = Bytes.toBytes("comments")
 
   override def run(content: Content, selector: Selector): Array[Put] = {
 
@@ -26,6 +27,9 @@ class QQParse extends Parser{
 
 //    try {
       val luntan = doc.select("body #wp #pt div.z a:eq(8)").text().trim
+      val carType = if(luntan.endsWith("论坛")) luntan.substring(0, luntan.indexOf("论坛")) else luntan
+      temp = doc.select("body #wp #pt div.z a:eq(6)").text()
+      val vehicle = if(temp != null && temp.endsWith("汽车")) temp.substring(0, temp.indexOf("汽车")) else temp
       val problem = doc.select("body #wp #pt div.z a:last-child").text().trim
       val clickAndView = doc.select("#postlist table:first-child td:eq(0) span.xi1").text().trim
 
@@ -61,16 +65,20 @@ class QQParse extends Parser{
         temp = list.select("table tbody tr:eq(0) td:eq(1) div.pct table").text().trim
         arr(10) = if(temp != null && temp.length > 0) ("comments", "comment", temp) else null
 
-        val key = "tencent" + " " + "|" + luntan + "#" * (8 - luntan.length) + "|" + arr(8)._3 +
+        val key = "tencent" + "|" + vehicle + "|" + carType + "|" + arr(8)._3 +
           "|" + url + "|" + arr(9)._3
         val put = new Put(Bytes.toBytes(key))
         if (problem != null && problem.length > 0)
           put.addColumn(Bytes.toBytes("comments"), Bytes.toBytes("topic"), Bytes.toBytes(problem))
         if (clickAndView != null && clickAndView.length > 0) {
           val clickView = NumExtractUtil.getNumArray(clickAndView)
-          put.addColumn(Bytes.toBytes("comments"), Bytes.toBytes("replay"), Bytes.toBytes(clickView(1).substring(1)))
-          put.addColumn(Bytes.toBytes("comments"), Bytes.toBytes("click"), Bytes.toBytes(clickView(0).substring(1)))
+          put.addColumn(columnFamily, Bytes.toBytes("replay"), Bytes.toBytes(clickView(1).substring(1)))
+          put.addColumn(columnFamily, Bytes.toBytes("click"), Bytes.toBytes(clickView(0).substring(1)))
         }
+
+        put.addColumn(columnFamily, Bytes.toBytes("chexing"), Bytes.toBytes(carType))
+        put.addColumn(columnFamily, Bytes.toBytes("pinpai"), Bytes.toBytes(vehicle))
+
         for (a <- arr if a != null) {
           put.addColumn(Bytes.toBytes(a._1), Bytes.toBytes(a._2), Bytes.toBytes(a._3))
         }

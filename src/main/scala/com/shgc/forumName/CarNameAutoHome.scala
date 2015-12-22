@@ -38,4 +38,10 @@ object CarNameAutoHome {
       }
     }
   }
+
+  def saveAsXML = {
+    val test = (new CarNameAutoHome).get("http://club.autohome.com.cn")
+
+
+  }
 }

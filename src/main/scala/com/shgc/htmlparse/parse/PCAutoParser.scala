@@ -15,6 +15,8 @@ import org.jsoup.Jsoup
  */
 class PCAutoParser extends Parser {
 
+  var vehicleBandAndType: Map[String, String] = null
+  val columnFamily = Bytes.toBytes("comments")
 
   override def run(content: Content, selector: Selector): Array[Put] = {
 
@@ -26,7 +28,10 @@ class PCAutoParser extends Parser {
       val doc = Jsoup.parse(html)
 
       var temp: String = null
-      val luntan = doc.select("#content .com-crumb a:eq(6)").text()
+      val luntan = doc.select("#content .com-crumb a:eq(6)").text().trim
+      val carType = if(luntan.endsWith("论坛")) luntan.substring(0, luntan.indexOf("论坛")) else luntan
+      temp = doc.select("#content .com-subHead .com-crumb a:eq(4)").text()
+      val vehicle = if(temp != null && temp.contains("论坛")) temp.substring(0, temp.indexOf("论坛")) else temp
       val view = doc.select("#views").text() // kan bu dao
       val reply = doc.select(".overView span").last().text()
       val title = doc.select(".post_right .post_r_tit .yh").text()
@@ -66,12 +71,14 @@ class PCAutoParser extends Parser {
 
 
         val time = arr(4)._3
-        val key = "pcauto" + " " * 2 + "|" + luntan.substring(0, luntan.length - 2) + "|" + time + "|" + url + "|" + arr(6)._3
+        val key = "pcauto" + "|" + vehicle  + "|"  + carType + "|" + time + "|" + url + "|" + arr(6)._3
 
         val put = new Put(Bytes.toBytes(key))
-        if (title != null && title.length > 0) put.addColumn(Bytes.toBytes("comments"), Bytes.toBytes("topic"), Bytes.toBytes(title))
-        if (view != null && view.length > 0) put.addColumn(Bytes.toBytes("comments"), Bytes.toBytes("click"), Bytes.toBytes(view))
-        if (reply != null && reply.length > 0) put.addColumn(Bytes.toBytes("comments"), Bytes.toBytes("reply"), Bytes.toBytes(reply))
+        if (title != null && title.length > 0) put.addColumn(columnFamily, Bytes.toBytes("topic"), Bytes.toBytes(title))
+        if (view != null && view.length > 0) put.addColumn(columnFamily, Bytes.toBytes("click"), Bytes.toBytes(view))
+        if (reply != null && reply.length > 0) put.addColumn(columnFamily, Bytes.toBytes("reply"), Bytes.toBytes(reply))
+        put.addColumn(columnFamily, Bytes.toBytes("chexing"), Bytes.toBytes(carType))
+        put.addColumn(columnFamily, Bytes.toBytes("pinpai"), Bytes.toBytes(vehicle))
 
         for (c <- arr if c != null && c._3 != null) {
           put.addColumn(Bytes.toBytes(c._1), Bytes.toBytes(c._2), Bytes.toBytes(c._3))

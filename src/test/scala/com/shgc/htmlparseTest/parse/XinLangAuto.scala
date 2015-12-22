@@ -19,15 +19,22 @@ import scala.collection.mutable.ArrayBuffer
  */
 @Test
 class XinLangAuto {
+  //车型直接取不出来
 
   @Test
   def run = {
-    val url = "http://bbs.auto.sina.com.cn/45/thread-5064701-1-1.html"
+    val url = "http://bbs.auto.sina.com.cn/45/244/thread-5032441-1-1.html"
+    val url2 = "http://bbs.auto.sina.com.cn/330/thread-4650698-1-1.html"
     val  html = Jsoup.connect(url).get().html()
     val  doc = Jsoup.parse(html)
     var temp: String = null
-    val luntan = doc.select("#wrap span a[name=D]").text()
-    println(luntan)
+    val luntan = doc.select("#ghc_main_nav").text()
+    println("+=====" + luntan + "====")
+    val aa = luntan.split("»")(2).trim.split(" ")
+    val carType = aa(aa.length - 1)
+    println(carType)
+    val vehicle = if(aa.length == 2) {{if(aa(0).endsWith("汽车")) aa(0).substring(0, aa(0).indexOf("汽车")) else carType}} else carType
+    println(vehicle)
     val problem = doc.select("form h1").text()
     println(problem)
     val view = doc.select("#view_count").text()

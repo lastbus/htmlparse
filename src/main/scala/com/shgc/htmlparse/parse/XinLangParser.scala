@@ -15,7 +15,11 @@ import org.jsoup.Jsoup
  */
 class XinLangParser extends Parser{
 
+  var vehicleBandAndCarType: Map[String, String] = null
+  val columnFamily = Bytes.toBytes("comments")
+
   override def run(content: Content, selector: Selector): Array[Put] = {
+    if(vehicleBandAndCarType == null || vehicleBandAndCarType.size == 0) return null
 //    try{
     val contentType = content.getMetadata.get("Content-Type").split("=")
     val encoding = if(contentType.length > 1) contentType(1) else "gb2312"
@@ -23,7 +27,9 @@ class XinLangParser extends Parser{
     val url = content.getUrl
     val doc = Jsoup.parse(html)
     var temp: String = null
-    val luntan = doc.select("#wrap span a[name=D]").text()
+    val luntan = doc.select("#wrap span a[name=D]").text().trim
+    val carType = if(luntan.endsWith("论坛"))luntan.substring(0, luntan.length -2) else luntan
+    val vehicleBand = vehicleBandAndCarType.getOrElse(carType, "unknown-sina")
     val problem = doc.select("form h1").text()
     val replay = doc.select("form table tbody tr:eq(0) td:eq(1) div.postmessage div:contains(被浏览) span:not(#view_count)").text()
     val view = doc.select("#view_count").text()
@@ -44,14 +50,16 @@ class XinLangParser extends Parser{
       temp = list.select("table tbody tr:eq(0) td:eq(0) p em").text()
       arr(4) = if(temp != null && temp.length > 0) ("comments", "label", temp) else null
 
-      val carType = luntan.substring(0, luntan.length -2)
       val time = arr(2)._3
-      val key = "xinlang" + " " + "|" + carType + "|" + time + "|" + url +"|" + arr(1)._3
+      val key = "xinlang" + "|"+ vehicleBand + "|" + carType + "|" + time + "|" + url +"|" + arr(1)._3
 
       val put = new Put(Bytes.toBytes(key))
-      if(problem != null && problem.length > 0) put.addColumn(Bytes.toBytes("comments"), Bytes.toBytes("topic"), Bytes.toBytes(problem))
-      if(view != null && view.length >0) put.addColumn(Bytes.toBytes("comments"), Bytes.toBytes("click"), Bytes.toBytes(view))
-      if(replay != null && replay.length >0) put.addColumn(Bytes.toBytes("comments"), Bytes.toBytes("replay"), Bytes.toBytes(replay))
+      if(problem != null && problem.length > 0) put.addColumn(columnFamily, Bytes.toBytes("topic"), Bytes.toBytes(problem))
+      if(view != null && view.length >0) put.addColumn(columnFamily, Bytes.toBytes("click"), Bytes.toBytes(view))
+      if(replay != null && replay.length >0) put.addColumn(columnFamily, Bytes.toBytes("replay"), Bytes.toBytes(replay))
+
+      put.addColumn(columnFamily, Bytes.toBytes("chexing"), Bytes.toBytes(carType))
+      put.addColumn(columnFamily, Bytes.toBytes("pinpai"), Bytes.toBytes(vehicleBand))
 
       for(a <- arr if a != null && a._3 != null){
         put.addColumn(Bytes.toBytes(a._1), Bytes.toBytes(a._2), Bytes.toBytes(a._3))

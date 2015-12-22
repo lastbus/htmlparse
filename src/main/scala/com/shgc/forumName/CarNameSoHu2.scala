@@ -5,7 +5,7 @@ import org.jsoup.Jsoup
 /**
  * Created by Administrator on 2015/12/17.
  */
-class CarNameSoHu extends GetCarName{
+class CarNameSoHu2 extends GetCarName{
 
   override def get(url: String): Array[(String, Array[String])] = {
     val document = Jsoup.connect(url).get()
@@ -31,10 +31,10 @@ class CarNameSoHu extends GetCarName{
   }
 }
 
-object CarNameSoHu {
+object CarNameSoHu2 {
 
   def main(args: Array[String]): Unit ={
-    val test = (new CarNameSoHu).get("http://saa.auto.sohu.com/search/clublist.shtml")
+    val test = (new CarNameSoHu2).get("http://saa.auto.sohu.com/search/clublist.shtml")
 
     for(tt <- test){
       println(s"car band: ${tt._1}")

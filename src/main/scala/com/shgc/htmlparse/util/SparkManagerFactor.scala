@@ -25,9 +25,8 @@ object SparkManagerFactor {
     if(sc != null) sc else {
       val sparkConf = new SparkConf().setAppName(appName).
         set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
-      sparkConf.setMaster("local[3]")
+//      sparkConf.setMaster("local[3]")
       sc = new SparkContext(sparkConf)
-
       sc
     }
   }
@@ -64,8 +63,8 @@ object SparkManagerFactor {
       hBaseConf = HBaseConfiguration.create()
       hBaseConf.addResource("hbase-site.xml")
       hBaseConf.set(TableOutputFormat.OUTPUT_TABLE, tableName)
-      val job = new Job(hBaseConf)
-//      val job = Job.getInstance(hBaseConf, tableName)
+//      val job = new Job(hBaseConf)
+      val job = Job.getInstance(hBaseConf, tableName)
       job.setOutputFormatClass(classOf[TableOutputFormat[(ImmutableBytesWritable, Put)]])
       hadoopConf = job.getConfiguration
       hadoopConf

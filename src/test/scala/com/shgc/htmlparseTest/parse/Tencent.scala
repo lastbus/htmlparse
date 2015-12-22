@@ -31,8 +31,10 @@ class Tencent {
     var temp: String = null
 
     val luntan = doc.select("body #wp #pt div.z a:eq(8)").text()
+    val vehicle = doc.select("body #wp #pt div.z a:eq(6)").text()
     val problem = doc.select("body #wp #pt div.z a:last-child").text()
     val clickAndView = doc.select("#postlist table:first-child td:eq(0) span.xi1").text()
+    println("vehicle" + vehicle)
     println("luntan: " + luntan)
     println("problem: " + problem)
     println("replay: " + NumExtractUtil.getNumArray(clickAndView)(1) + " view: " +

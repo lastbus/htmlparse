@@ -70,9 +70,16 @@ object Main {
     val selector = new Selector() //just for invocation method
 
     val sc = SparkManagerFactor.getSparkContext(this.getClass.getName)
+
+    val countAll = sc.accumulator(0)
+    val countMatcher = sc.accumulator(0)
+    val countError = sc.accumulator(0)
+    val countFloors = sc.accumulator(0)
+
     val rawDataRDD = sc.sequenceFile[Text, Content](path)
-    println(s"input html num: ${rawDataRDD.count()}")
+//    println(s"input html num: ${rawDataRDD.count()}")
     val b = rawDataRDD.map{case(url, content) =>{
+      countAll += 1
       var pars: Parser = null
       for((urlPattern, p) <- parser){
         if(urlPattern.matcher(url.toString).matches()) pars = p
@@ -80,24 +87,27 @@ object Main {
 
       if(pars == null) null else {
         try{
+          countMatcher += 1
           pars.run(content, selector)
         }catch {
-          case _ : Exception => {println("error: " + url.toString); null}
+          case _ : Exception => {countError += 1; println("error: " + url.toString); null}
         }
       }
     }}
     val c = b.filter(puts => puts != null)
-    c.cache()
-    println(s"html after filter: ${c.count()}")
+    println(s"read  ${countAll.value}, \n parsed  ${countMatcher},, \n failed: ${countError}")
+//    c.cache()
+//    println(s"html after filter: ${c.count()}")
 
-    val result = c.flatMap(put => put).filter(put => put != null).map(put => (new ImmutableBytesWritable(put.getRow), put))
-    result.cache()
-    c.unpersist()
-    println(s"floor num:  ${result.count()}")
+    val result = c.flatMap(put => put).filter(put => put != null).map(put =>{countFloors += 1;(new ImmutableBytesWritable(put.getRow), put)})
+//    result.cache()
+//    println(s"floor num:  ${result.count()}")
+//    c.unpersist()
+    println(s"floors: ${countFloors}")
 
     val hadoopConf = SparkManagerFactor.getHBaseHadoopConf(table)
     result.saveAsNewAPIHadoopDataset(hadoopConf)
-    result.unpersist()
+//    result.unpersist()
 
 
     sc.stop()

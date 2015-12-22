@@ -19,7 +19,11 @@ import scala.collection.mutable.ArrayBuffer
  */
 class BitAutoParser extends Parser{
 
+  var vehicleAndType: Map[String, String] = null
+  val columnFamily = Bytes.toBytes("comments")
+
   override def run(content: Content, selector: Selector): Array[Put] = {
+    if(vehicleAndType == null || vehicleAndType.size == 0) return null
 //    try {
     val contentType = content.getMetadata.get("Content-Type").split("=")
     val encoding = if(contentType.length > 1) contentType(1) else "urf-8"
@@ -32,12 +36,15 @@ class BitAutoParser extends Parser{
       val topic = doc.select("#TitleTopicSt").text().trim
       val clickAndReply = doc.select("[class=title_box] span").text().trim
 
+      val carType = if(luntan.endsWith("论坛")) luntan.substring(0, luntan.indexOf("论坛")) else luntan
+      val vehicleBand = vehicleAndType.getOrElse(carType, "unknown-bitauto")
+
       val list = doc.select(".postcontbox .postcont_list")
       val putsArray = new Array[Put](list.size)
       var i = 0
       for (t <- elements2List(list) if t.select("[span:contains(已禁用)]") != null) {
 
-        val contArray = new Array[(String, String, String)](10)
+        val contArray = new Array[(String, String, String)](12)
         temp = t.select("[class=user_name]").text().trim
         contArray(0) = if(temp != null && temp.length > 0) ("comments", "username", temp) else null
         temp = t.select("li:contains(等)").text().trim
@@ -63,19 +70,20 @@ class BitAutoParser extends Parser{
         temp = t.select("div[class=floor_box]").text().trim
         contArray(8) = if(temp != null && temp.length > 0) ("comments", "floor", FloorUtil.getFloorNumber(temp)) else null
 
-        val carType = luntan.substring(0, luntan.length - 2)
+
         val time = contArray(6)._3
-        val key = "bitauto" + " " + "|" + carType + "#" * (8-carType.length) +
+        val key = "bitauto" + "|" + vehicleBand + "|" + carType +
           "|" + time + "|" + url + "|" + contArray(8)._3
 
         val put = new Put(Bytes.toBytes(key))
         if(clickAndReply != null) {
           val t = NumExtractUtil.getNumArray(clickAndReply)
-          put.addColumn(Bytes.toBytes("comment"), Bytes.toBytes("reply"), Bytes.toBytes(t(0)))
-          put.addColumn(Bytes.toBytes("comment"), Bytes.toBytes("click"), Bytes.toBytes(t(1)))
+          put.addColumn(columnFamily, Bytes.toBytes("reply"), Bytes.toBytes(t(0)))
+          put.addColumn(columnFamily, Bytes.toBytes("click"), Bytes.toBytes(t(1)))
         }
-        put.addColumn(Bytes.toBytes("comments"), Bytes.toBytes("topic"), Bytes.toBytes(topic))
-
+        put.addColumn(columnFamily, Bytes.toBytes("topic"), Bytes.toBytes(topic))
+        put.addColumn(columnFamily, Bytes.toBytes("chexing"), Bytes.toBytes(carType))
+        put.addColumn(columnFamily, Bytes.toBytes("pinpai"), Bytes.toBytes(vehicleBand))
         for (arr <- contArray if arr != null) {
           put.addColumn(Bytes.toBytes(arr._1), Bytes.toBytes(arr._2), Bytes.toBytes(arr._3))
         }

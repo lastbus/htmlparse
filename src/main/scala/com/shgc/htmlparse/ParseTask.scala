@@ -54,6 +54,6 @@ class ParseTask extends Task{
 
 
     sc.stop()
-
+    0
   }
 }

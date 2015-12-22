@@ -15,8 +15,12 @@ import org.jsoup.Jsoup
  */
 class XCarParser extends Parser {
 
+  var vehicleBandAndCarType: Map[String, String] = null
+  val columnFamily = Bytes.toBytes("comments")
 
   override def run(content: Content, selector: Selector): Array[Put] = {
+    if(vehicleBandAndCarType == null || vehicleBandAndCarType.size == 0) return null
+
 //    try{
     val contentType = content.getMetadata.get("Content-Type").split("=")
     val encoding = if(contentType.length > 1) contentType(1) else "gb2312"
@@ -26,6 +30,8 @@ class XCarParser extends Parser {
     var temp: String = null
 
     val luntan = doc.select("#_img div.F_box_2 table h1 a").text()
+    val carType = if(luntan.contains("论坛")) luntan.substring(0, luntan.indexOf("论坛")) else luntan
+    val vehicleBand = vehicleBandAndCarType.getOrElse(carType, "unknown-xcar")
     val problem = doc.select("#_img div.F_box_2 table h1").text().split("<")(0)
     val viewAndReplay = NumExtractUtil.getNumArray(doc.select("#showPic span").text())
 
@@ -81,15 +87,16 @@ class XCarParser extends Parser {
         arr(8) = if(temp != null && temp.length > 0) ("comments", "comment", temp.substring(length)) else null
       }
 
-      val carType = luntan.substring(0, luntan.length - 2)
       val time = arr(4)._3
-      val key = "xcar" + " " * 4 + "|" + carType + "#" * (8 - carType.length) + "|" + time + "|" + url + "|" + arr(3)._3
+      val key = "xcar" + "|" + vehicleBand + "|" + carType + "|" + time + "|" + url + "|" + arr(3)._3
       val put = new Put(Bytes.toBytes(key))
       if(problem != null) put.addColumn(Bytes.toBytes("comments"), Bytes.toBytes("topic"), Bytes.toBytes(problem))
       if(viewAndReplay != null && viewAndReplay.length == 2){
-        put.addColumn(Bytes.toBytes("comments"), Bytes.toBytes("reply"), Bytes.toBytes(viewAndReplay(0)))
-        put.addColumn(Bytes.toBytes("comments"), Bytes.toBytes("click"), Bytes.toBytes(viewAndReplay(1)))
+        put.addColumn(columnFamily, Bytes.toBytes("reply"), Bytes.toBytes(viewAndReplay(0)))
+        put.addColumn(columnFamily, Bytes.toBytes("click"), Bytes.toBytes(viewAndReplay(1)))
       }
+      put.addColumn(columnFamily, Bytes.toBytes("chexing"), Bytes.toBytes(carType))
+      put.addColumn(columnFamily, Bytes.toBytes("pinpai"), Bytes.toBytes(vehicleBand))
       for (a <- arr if a != null && a._3.length >0) {
         put.addColumn(Bytes.toBytes(a._1), Bytes.toBytes(a._2), Bytes.toBytes(a._3))
       }

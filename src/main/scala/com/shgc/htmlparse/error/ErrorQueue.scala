@@ -9,7 +9,6 @@ import scala.collection.mutable.ArrayBuffer
  * Created by Make on 2015/11/30.
  */
 object ErrorQueue {
-  val queue: util.Queue = null
   val errorArray = new ArrayBuffer[String]()
 
   def add(url: String): Unit ={
