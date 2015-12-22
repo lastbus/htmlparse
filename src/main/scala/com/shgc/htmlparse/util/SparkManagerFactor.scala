@@ -4,7 +4,7 @@ import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable
 import org.apache.hadoop.hbase.{TableName, HBaseConfiguration}
-import org.apache.hadoop.hbase.client.{Put, ConnectionFactory, Connection, Table}
+import org.apache.hadoop.hbase.client._
 import org.apache.hadoop.hbase.mapreduce.{TableOutputFormat, TableInputFormat}
 import org.apache.hadoop.mapreduce.Job
 import org.apache.hadoop.mapreduce.Job
@@ -57,19 +57,37 @@ object SparkManagerFactor {
       null
     }
   }
+  def getHBaseHadoopConf2(tableName: String): Configuration = {
+    if(sc == null) getSparkContext()
+    sc.hadoopConfiguration.addResource("hbase-site.xml")
+    sc.hadoopConfiguration.set(TableOutputFormat.OUTPUT_TABLE, tableName)
+    val job = Job.getInstance(sc.hadoopConfiguration)
+    job.setOutputKeyClass(classOf[ImmutableBytesWritable])
+    job.setOutputValueClass(classOf[Result])
+    job.setOutputFormatClass(classOf[TableOutputFormat[(ImmutableBytesWritable, Put)]])
+    hadoopConf = job.getConfiguration
+    hadoopConf
+  }
 
   def getHBaseHadoopConf(tableName: String): Configuration ={
     if(hBaseConf == null){
       hBaseConf = HBaseConfiguration.create()
 //      hBaseConf.addResource("hbase-site.xml")
-      hBaseConf.set(TableOutputFormat.OUTPUT_TABLE, tableName)
+      if(sc == null) getSparkContext()
+      sc.hadoopConfiguration.set("hbase.zookeeper.quorum ","shgc02,shgc03,shgc04")
+      sc.hadoopConfiguration.set("zookeeper.znode.parent","/hbase")
+      sc.hadoopConfiguration.set(TableOutputFormat.OUTPUT_TABLE, tableName)
 //      val job = new Job(hBaseConf)
-      val job = Job.getInstance(hBaseConf, tableName)
+      val job = Job.getInstance(sc.hadoopConfiguration, tableName)
+      job.setOutputKeyClass(classOf[ImmutableBytesWritable])
+      job.setOutputValueClass(classOf[Result])
       job.setOutputFormatClass(classOf[TableOutputFormat[(ImmutableBytesWritable, Put)]])
       hadoopConf = job.getConfiguration
       hadoopConf
     }else if(!hBaseConf.get(TableOutputFormat.OUTPUT_TABLE).equals(tableName)) {
       val job = Job.getInstance(hBaseConf, "hadoopConf" + tableName)
+      job.setOutputKeyClass(classOf[ImmutableBytesWritable])
+      job.setOutputValueClass(classOf[Result])
       job.setOutputFormatClass(classOf[TableOutputFormat[(ImmutableBytesWritable, Put)]])
       hadoopConf = job.getConfiguration
       hadoopConf

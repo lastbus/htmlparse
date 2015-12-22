@@ -35,7 +35,14 @@ object Main {
     val sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
     println(s"=============#### program begins at: ${sdf.format(timeStart)} ###==============")
 
-    run(args)
+    try{
+      run(args)
+    }catch {
+      case _: Exception => {
+        println("error in execution!")
+      }
+    }
+
 
     println("\ntime taken: " + (new Date().getTime - timeStart.getTime) / 1000 + " seconds\n\n")
     System.exit(0)
@@ -64,6 +71,8 @@ object Main {
 
     val path = args(0)
     val table = args(1)
+    println("==================" + path)
+    println(table)
 
     val parser = ParserFactory.createParseMap()
 
@@ -71,10 +80,10 @@ object Main {
 
     val sc = SparkManagerFactor.getSparkContext(this.getClass.getName)
 
-    val countAll = sc.accumulator(0)
-    val countMatcher = sc.accumulator(0)
-    val countError = sc.accumulator(0)
-    val countFloors = sc.accumulator(0)
+    val countAll = sc.accumulator(0, "count-all")
+    val countMatcher = sc.accumulator(0, "count-match")
+    val countError = sc.accumulator(0, "count-error")
+    val countFloors = sc.accumulator(0, "count-floor")
 
     val rawDataRDD = sc.sequenceFile[Text, Content](path)
 //    println(s"input html num: ${rawDataRDD.count()}")
@@ -95,7 +104,7 @@ object Main {
       }
     }}
     val c = b.filter(puts => puts != null)
-    println(s"read  ${countAll}, \n parsed  ${countMatcher}, \n failed: ${countError}")
+
 //    c.cache()
 //    println(s"html after filter: ${c.count()}")
 
@@ -103,12 +112,13 @@ object Main {
 //    result.cache()
 //    println(s"floor num:  ${result.count()}")
 //    c.unpersist()
-    println(s"floors: ${countFloors.value}")
 
-    val hadoopConf = SparkManagerFactor.getHBaseHadoopConf(table)
+    val hadoopConf = SparkManagerFactor.getHBaseHadoopConf2(table)
     result.saveAsNewAPIHadoopDataset(hadoopConf)
 //    result.unpersist()
 
+    println(s"read  ${countAll}, \n parsed  ${countMatcher}, \n failed: ${countError}")
+    println(s"floors: ${countFloors.value}")
 
     sc.stop()
   }

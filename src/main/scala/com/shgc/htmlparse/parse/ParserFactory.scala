@@ -2,7 +2,7 @@ package com.shgc.htmlparse.parse
 
 import java.util.regex.Pattern
 
-import com.shgc.forumName.LoadCarBandName
+import com.shgc.forumName.{XMLUtil, LoadCarBandName}
 import com.shgc.htmlparse.util.ParseConfiguration
 
 import scala.collection.mutable
@@ -54,27 +54,27 @@ object ParserFactory extends Serializable{
     val parseMap = mutable.HashMap.empty[Pattern, Parser]
 
     val autoHomeParse = new AutoHomeParser
-    autoHomeParse.vehicleBandMap = LoadCarBandName.loadAutoHome
+    autoHomeParse.vehicleBandMap = XMLUtil.loadVehicle("autohome.xml")
     parseMap(autoHome) = autoHomeParse
 
     val bitAutoParse = new BitAutoParser
-    bitAutoParse.vehicleAndType = LoadCarBandName.loadBitAuto
+    bitAutoParse.vehicleAndType = XMLUtil.loadVehicle("bitauto.xml")
     parseMap(bitAuto) = bitAutoParse
 
     val pcAutoParse = new PCAutoParser
-    pcAutoParse.vehicleBandAndType = LoadCarBandName.loadPcAuto
+    pcAutoParse.vehicleBandAndType = XMLUtil.loadVehicle("pcauto.xml")
     parseMap(pCAuto) = pcAutoParse
 
     val xCarParse = new XCarParser
-    xCarParse.vehicleBandAndCarType = LoadCarBandName.loadXCar
+    xCarParse.vehicleBandAndCarType = XMLUtil.loadVehicle("xcar.xml")
     parseMap(xCar) = xCarParse
 
     val xinLangParse = new XinLangParser
-    xinLangParse.vehicleBandAndCarType = LoadCarBandName.loadSina
+    xinLangParse.vehicleBandAndCarType = XMLUtil.loadVehicle("sina.xml")
     parseMap(xinLang) = xinLangParse
 
     val soHuParse = new SoHuParse
-    soHuParse.vehicleBandAndCarType = LoadCarBandName.loadSoHu
+    soHuParse.vehicleBandAndCarType = XMLUtil.loadVehicle("sohu.xml")
     parseMap(soHu) = soHuParse
 
     parseMap(QQ) = new QQParse

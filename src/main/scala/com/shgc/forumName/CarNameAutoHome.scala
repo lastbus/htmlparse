@@ -23,6 +23,7 @@ class CarNameAutoHome extends GetCarName{
       bandNum += 1
       carTypeAndNameArray(i) = (carType, carNameArray)
     }
+    println(s"autohome car band: ${bandNum} \nautohome car number: ${typeCount}")
     carTypeAndNameArray
   }
 }

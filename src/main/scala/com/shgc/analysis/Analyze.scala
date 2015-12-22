@@ -45,6 +45,7 @@ object Analyze {
     val timeInterval = if (args.length > 4) args(4) else null
 
     val sc = SparkManagerFactor.getSparkContext(this.getClass.getName)
+
     val dataBroadcast = sc.broadcast(data)
     val data2Broadcast = sc.broadcast(data2)
 
@@ -68,7 +69,6 @@ object Analyze {
 
 //    val hBaseSelect = HBaseSparkUtil.select(sc, "hh", "comments", "comment", carType = "奔奔", website = "autohome", timeIntervalRegex = ".*2015.*")
 //        println("select: " + hBaseSelect.count())
-
 
     sc.stop()
 
