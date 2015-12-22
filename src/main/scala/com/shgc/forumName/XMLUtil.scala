@@ -48,7 +48,7 @@ object XMLUtil {
       saveToPath(test1, "pcauto.xml")
       success = true
     }
-
+    
     success = false
     while (success){
       val test2 = (new CarNameAutoHome).get("http://club.autohome.com.cn")

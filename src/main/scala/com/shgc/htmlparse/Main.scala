@@ -95,7 +95,7 @@ object Main {
       }
     }}
     val c = b.filter(puts => puts != null)
-    println(s"read  ${countAll.value}, \n parsed  ${countMatcher},, \n failed: ${countError}")
+    println(s"read  ${countAll}, \n parsed  ${countMatcher}, \n failed: ${countError}")
 //    c.cache()
 //    println(s"html after filter: ${c.count()}")
 
@@ -103,7 +103,7 @@ object Main {
 //    result.cache()
 //    println(s"floor num:  ${result.count()}")
 //    c.unpersist()
-    println(s"floors: ${countFloors}")
+    println(s"floors: ${countFloors.value}")
 
     val hadoopConf = SparkManagerFactor.getHBaseHadoopConf(table)
     result.saveAsNewAPIHadoopDataset(hadoopConf)

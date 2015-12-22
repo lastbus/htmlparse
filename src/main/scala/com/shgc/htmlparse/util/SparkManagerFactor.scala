@@ -61,7 +61,7 @@ object SparkManagerFactor {
   def getHBaseHadoopConf(tableName: String): Configuration ={
     if(hBaseConf == null){
       hBaseConf = HBaseConfiguration.create()
-      hBaseConf.addResource("hbase-site.xml")
+//      hBaseConf.addResource("hbase-site.xml")
       hBaseConf.set(TableOutputFormat.OUTPUT_TABLE, tableName)
 //      val job = new Job(hBaseConf)
       val job = Job.getInstance(hBaseConf, tableName)
