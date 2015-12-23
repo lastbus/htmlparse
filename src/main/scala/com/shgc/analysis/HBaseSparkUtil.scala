@@ -22,6 +22,20 @@ object HBaseSparkUtil extends Serializable{
     Base64.encodeBytes(proto.toByteArray)
   }
 
+  def getAllRDD(sc: SparkContext, tableName: String, columnFamily: String, column: String): RDD[(String, String)] ={
+    val columnFamilyBytes = Bytes.toBytes(columnFamily)
+    val columnBytes = Bytes.toBytes(column)
+    sc.hadoopConfiguration.addResource("hbase-site.xml")
+    sc.hadoopConfiguration.set(TableInputFormat.INPUT_TABLE, tableName)
+    sc.newAPIHadoopRDD(sc.hadoopConfiguration, classOf[TableInputFormat],
+      classOf[ImmutableBytesWritable], classOf[Result]).
+      map(d =>{
+        val key = d._2.getRow
+        val value = d._2.getValue(columnFamilyBytes, columnBytes)
+        if(key != null && value != null)(new String(key), new String(value)) else null
+      })
+  }
+
   /**
    * 根据网站取数据
    * @param sc
@@ -38,10 +52,11 @@ object HBaseSparkUtil extends Serializable{
     scan.setStopRow(Bytes.toBytes(website + "}"))
 //    scan.setRowPrefixFilter(Bytes.toBytes(website))
 //    scan.setFilter(new PrefixFilter(Bytes.toBytes(website)))
-    hBaseConf.set(TableInputFormat.SCAN, convertScanToString(scan))
-    hBaseConf.set(TableInputFormat.INPUT_TABLE, tableName)
+    sc.hadoopConfiguration.addResource("hbase-site.xml")
+    sc.hadoopConfiguration.set(TableInputFormat.SCAN, convertScanToString(scan))
+    sc.hadoopConfiguration.set(TableInputFormat.INPUT_TABLE, tableName)
 
-    sc.newAPIHadoopRDD(hBaseConf, classOf[TableInputFormat],
+    sc.newAPIHadoopRDD(sc.hadoopConfiguration, classOf[TableInputFormat],
                         classOf[ImmutableBytesWritable], classOf[Result]).
       map(d =>{
         val key = d._2.getRow
@@ -60,6 +75,7 @@ object HBaseSparkUtil extends Serializable{
    * @return
    */
   def getVehicleBandRDD(sc: SparkContext, vehicleBand: String, tableName: String, columnFamily: String, column: String): RDD[(String, String)] ={
+    if(sc == null) return null
     val vehicle = "^.*\\|" + vehicleBand + "\\|.+\\|2015\\d{10}\\|.*"
     val scan = new Scan()
     val columnFamilyBytes  = Bytes.toBytes(columnFamily)
@@ -68,9 +84,10 @@ object HBaseSparkUtil extends Serializable{
     val comp = new RegexStringComparator(vehicle)
     val filter = new RowFilter(CompareOp.EQUAL, comp)
     scan.setFilter(filter)
-    hBaseConf.set(TableInputFormat.SCAN, convertScanToString(scan))
-    hBaseConf.set(TableInputFormat.INPUT_TABLE, tableName)
-    sc.newAPIHadoopRDD(hBaseConf, classOf[TableInputFormat],
+    sc.hadoopConfiguration.addResource("hbase-site.xml")
+    sc.hadoopConfiguration.set(TableInputFormat.SCAN, convertScanToString(scan))
+    sc.hadoopConfiguration.set(TableInputFormat.INPUT_TABLE, tableName)
+    sc.newAPIHadoopRDD(sc.hadoopConfiguration, classOf[TableInputFormat],
       classOf[ImmutableBytesWritable], classOf[Result]).
       map(d =>{
         val key = d._2.getRow
@@ -88,7 +105,7 @@ object HBaseSparkUtil extends Serializable{
    */
   def getCarTypeRDD(sc: SparkContext,vehicleBand: String, carType: String,
                     tableName: String, columnFamily: String, column: String): RDD[(String, String)] ={
-    val carName = "^.*\\|" + vehicleBand + "\\|" + carType + "\\|2015\\d{10}\\|.*"
+    val carName = "\\w{2,8}\\|" + vehicleBand + "\\|" + carType + "\\|2015\\d{10}\\|.+"
     val scan = new Scan()
     val columnFamilyBytes  = Bytes.toBytes(columnFamily)
     val columnBytes = Bytes.toBytes(column)
@@ -96,9 +113,11 @@ object HBaseSparkUtil extends Serializable{
     val comp = new RegexStringComparator(carName)
     val filter = new RowFilter(CompareOp.EQUAL, comp)
     scan.setFilter(filter)
-    hBaseConf.set(TableInputFormat.SCAN, convertScanToString(scan))
-    hBaseConf.set(TableInputFormat.INPUT_TABLE, tableName)
-    sc.newAPIHadoopRDD(hBaseConf, classOf[TableInputFormat],
+    sc.hadoopConfiguration.addResource("hbase-site.xml")
+//    sc.hadoopConfiguration.set("hbase.rpc.timeout", "120000")
+    sc.hadoopConfiguration.set(TableInputFormat.SCAN, convertScanToString(scan))
+    sc.hadoopConfiguration.set(TableInputFormat.INPUT_TABLE, tableName)
+    sc.newAPIHadoopRDD(sc.hadoopConfiguration, classOf[TableInputFormat],
           classOf[ImmutableBytesWritable], classOf[Result]).
       map(d =>{
         val key = d._2.getRow
@@ -124,10 +143,11 @@ object HBaseSparkUtil extends Serializable{
     val filter = new RowFilter(CompareOp.EQUAL, comp)
     scan.setFilter(filter)
 
-    hBaseConf.set(TableInputFormat.SCAN, convertScanToString(scan))
-    hBaseConf.set(TableInputFormat.INPUT_TABLE, tableName)
+    sc.hadoopConfiguration.addResource("hbase-site.xml")
+    sc.hadoopConfiguration.set(TableInputFormat.SCAN, convertScanToString(scan))
+    sc.hadoopConfiguration.set(TableInputFormat.INPUT_TABLE, tableName)
 
-    sc.newAPIHadoopRDD(hBaseConf, classOf[TableInputFormat],
+    sc.newAPIHadoopRDD(sc.hadoopConfiguration, classOf[TableInputFormat],
                 classOf[ImmutableBytesWritable], classOf[Result]).
     map(d =>{
       val key = d._2.getRow
@@ -155,10 +175,10 @@ object HBaseSparkUtil extends Serializable{
     if(carType != null) filterList.addFilter(new RowFilter(CompareOp.EQUAL, new SubstringComparator(carType)))
     if(timeIntervalRegex != null) filterList.addFilter(new RowFilter(CompareOp.EQUAL, new RegexStringComparator(timeIntervalRegex)))
     if(filterList.getFilters.size() != 0) scan.setFilter(filterList)
-
-    hBaseConf.set(TableInputFormat.INPUT_TABLE, tableName)
-    hBaseConf.set(TableInputFormat.SCAN, convertScanToString(scan))
-    sc.newAPIHadoopRDD(hBaseConf, classOf[TableInputFormat], classOf[ImmutableBytesWritable], classOf[Result]).
+    sc.hadoopConfiguration.addResource("hbase-site.xml")
+    sc.hadoopConfiguration.set(TableInputFormat.INPUT_TABLE, tableName)
+    sc.hadoopConfiguration.set(TableInputFormat.SCAN, convertScanToString(scan))
+    sc.newAPIHadoopRDD(sc.hadoopConfiguration, classOf[TableInputFormat], classOf[ImmutableBytesWritable], classOf[Result]).
       map(d =>{
         val key = d._2.getRow
         val value = d._2.getValue(columnFamilyBytes, columnBytes)
@@ -179,9 +199,10 @@ object HBaseSparkUtil extends Serializable{
     val columnFamilyBytes  = Bytes.toBytes(columnFamily)
     val columnBytes = Bytes.toBytes(column)
     scan.addColumn(columnFamilyBytes, columnBytes)
-    hBaseConf.set(TableInputFormat.INPUT_TABLE, tableName: String)
-    hBaseConf.set(TableInputFormat.SCAN, convertScanToString(scan))
-    sc.newAPIHadoopRDD(hBaseConf, classOf[TableInputFormat],
+    sc.hadoopConfiguration.addResource("hbase-site.xml")
+    sc.hadoopConfiguration.set(TableInputFormat.INPUT_TABLE, tableName: String)
+    sc.hadoopConfiguration.set(TableInputFormat.SCAN, convertScanToString(scan))
+    sc.newAPIHadoopRDD(sc.hadoopConfiguration, classOf[TableInputFormat],
     classOf[ImmutableBytesWritable], classOf[Result]).map(d =>{
       val key = d._2.getRow
       val value = d._2.getValue(columnFamilyBytes, columnBytes)

@@ -71,8 +71,8 @@ object Main {
 
     val path = args(0)
     val table = args(1)
-    println("==================" + path)
-    println(table)
+    println("read path: " + path)
+    println("save table: " + table)
 
     val parser = ParserFactory.createParseMap()
 
@@ -117,7 +117,7 @@ object Main {
     result.saveAsNewAPIHadoopDataset(hadoopConf)
 //    result.unpersist()
 
-    println(s"read  ${countAll}, \n parsed  ${countMatcher}, \n failed: ${countError}")
+    println(s"read: ${countAll}, \nparsed: ${countMatcher},\nfailed: ${countError}")
     println(s"floors: ${countFloors.value}")
 
     sc.stop()

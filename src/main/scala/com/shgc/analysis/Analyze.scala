@@ -1,5 +1,8 @@
 package com.shgc.analysis
 
+import java.text.SimpleDateFormat
+import java.util.Date
+
 import com.shgc.excel.ReadExcel
 import com.shgc.htmlparse.util.SparkManagerFactor
 import org.apache.hadoop.hbase.HBaseConfiguration
@@ -8,7 +11,7 @@ import org.apache.hadoop.hbase.io.ImmutableBytesWritable
 import org.apache.hadoop.hbase.mapreduce.TableInputFormat
 import org.apache.hadoop.hbase.protobuf.ProtobufUtil
 import org.apache.hadoop.hbase.util.{Base64, Bytes}
-import org.apache.spark.SparkContext
+import org.apache.spark.{Accumulator, SparkContext}
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD
 
@@ -26,6 +29,11 @@ object Analyze {
   val columnsBytes= Bytes.toBytes("comment")
 
   def main(args: Array[String]): Unit = {
+
+    val timeStart = new Date()
+    val sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+    println(s"=============#### program begins at: ${sdf.format(timeStart)} ###==============")
+
 
     if (args.length < 2) {
       println("please input table name and file-path")
@@ -48,29 +56,34 @@ object Analyze {
 
     val dataBroadcast = sc.broadcast(data)
     val data2Broadcast = sc.broadcast(data2)
+    val count = sc.accumulator(0)
 
     if (vehicleBand != null && carType != null) {
-      val dataRawRDD = HBaseSparkUtil.getCarTypeRDD(sc, vehicleBand, carType, tableName, "comments", "comment")
-      println(s"${vehicleBand}  ${carType} number:  ${dataRawRDD.count()}")
-//      analysis(dataRawRDD, dataBroadcast, data2Broadcast)
+      val dataRawRDD = HBaseSparkUtil.getAllRDD(sc, tableName, "comments", "comment")
+//      println(s"${vehicleBand}  ${carType} number:  ${dataRawRDD.count()}")
+      analysis(dataRawRDD, dataBroadcast, data2Broadcast, count)
     } else if(vehicleBand != null) {
       val dataRawRDD = HBaseSparkUtil.getVehicleBandRDD(sc, vehicleBand, tableName, "comments", "comment")
       println(s"${vehicleBand} number:  ${dataRawRDD.count}")
-//      analysis(dataRawRDD, dataBroadcast, data2Broadcast)
+      analysis(dataRawRDD, dataBroadcast, data2Broadcast, count)
     }
 //    val hBaseScanTest = HBaseSparkUtil.getWebsiteRDD(sc, "autohome", "hh", "comments", "comment")
 //    println(s"autohome:  " + hBaseScanTest.count())
-//
+
 //    val hBaseCarTypeTest = HBaseSparkUtil.getCarTypeRDD(sc, "奔奔", "hh", "comments", "comment")
 //    println(s"奔奔:  " + hBaseCarTypeTest.count())
 //
-//    val hBaseTimeIntervalTest = HBaseSparkUtil.getTimeInterval(sc, ".*\\|2015\\d{10}\\|.*", tableName, "comments", "comment")
+//    val hBaseTimeIntervalTest = HBaseSparkUtil.getTimeInterval(sc, "\\w+|\\.+\\|2015\\d{10}\\|.+", tableName, "comments", "comment")
 //    println(s"2015:  ${hBaseTimeIntervalTest.count()}")
 
 //    val hBaseSelect = HBaseSparkUtil.select(sc, "hh", "comments", "comment", carType = "奔奔", website = "autohome", timeIntervalRegex = ".*2015.*")
 //        println("select: " + hBaseSelect.count())
 
+    println("counter: " + count)
     sc.stop()
+
+    println("\ntime taken: " + (new Date().getTime - timeStart.getTime) / 1000 + " seconds\n\n")
+    System.exit(0)
 
 
 
@@ -78,8 +91,10 @@ object Analyze {
 
 
   def analysis(hBaseTimeIntervalTest: RDD[(String, String)], dataBroadcast: Broadcast[Array[Map[String, Array[String]]]],
-                data2Broadcast: Broadcast[Array[Map[String, Array[String]]]]): Unit = {
+                data2Broadcast: Broadcast[Array[Map[String, Array[String]]]],
+               counter: Accumulator[Int]): Unit = {
     val a = hBaseTimeIntervalTest.map { case (url, comment) => {
+      counter += 1
       val array = dataBroadcast.value
       val arrayBuffer = new ArrayBuffer[(String, String, Int)]
       for (map <- array) {
@@ -95,62 +110,62 @@ object Analyze {
     a.cache()
     a.saveAsTextFile("/user/hdfs/temp2/analyze")
 
-    val temp = a.map { case (url, feature, num) => (feature, num) }.reduceByKey((f1, f2) => f1 + f2)
-
-    temp.cache()
-    temp.filter(d => d._1.startsWith("产品") && d._1.contains("关注点")).coalesce(1).map(d => d._1 + "," + d._2).
-      saveAsTextFile("/user/hdfs/temp2/analyzeSum/chanpin")
-    temp.filter(d => d._1.startsWith("品牌")).coalesce(1).map(d => d._1 + "," + d._2).
-      saveAsTextFile("/user/hdfs/temp2/analyzeSum/pinpai")
-    temp.filter(d => d._1.startsWith("售后服务") || d._1.startsWith("销售服务")).coalesce(1).map(d => d._1 + "," + d._2).
-      saveAsTextFile("/user/hdfs/temp2/analyzeSum/fuwu")
-    temp.unpersist()
-    a.unpersist()
-
-    val emotionRDD = hBaseTimeIntervalTest.map { case (url, comment) => {
-      val array = dataBroadcast.value
-      val arrayBuffer = new ArrayBuffer[(String, String, String)]
-      for (map <- array) {
-        for ((key, value) <- map) {
-          var has = false
-          for (s <- value if (!has)) if (comment.contains(s)) has = true
-          if (has) arrayBuffer += ((url, key, comment))
-        }
-      }
-      if (arrayBuffer.size > 0) arrayBuffer else null
-    }
-    }.filter(_ != null).flatMap(d => d).
-      filter(d => d._2.contains("产品") && d._2.contains("关注点")).
-      map { case (url, key, comment) => {
-        val array = data2Broadcast.value
-        val result = new Array[(String, String, Int)](2)
-        val satisfy = array(0)
-        val value = satisfy.getOrElse(key.replace("关注点", "满意点"), null)
-        result(0) = if (value == null) null
-        else {
-          var has = false
-          for (s <- value if (!has)) if (comment.contains(s)) has = true
-          if (has) (url, key.replace("关注点", "满意点"), 1) else null
-        }
-        val complain = array(1).getOrElse(key.replace("关注点", "抱怨点"), null)
-        result(1) = if (complain == null) null
-        else {
-          var has = false
-          for (s <- complain if (!has)) if (comment.contains(s)) has = true
-          if (has) (url, key.replace("关注点", "抱怨点"), 1) else null
-        }
-        result
-      }
-      }.flatMap(d => d).filter(_ != null).
-      map { case (url, feature, num) => (feature, num) }.reduceByKey((f1, f2) => f1 + f2)
-    emotionRDD.cache()
-    println(emotionRDD.count)
-    emotionRDD.coalesce(1).map(d => d._1 + "," + d._2).saveAsTextFile("/user/hdfs/temp2/analyzeSum/chanpin-")
-    emotionRDD.filter(d => d._1.contains("满意点")).coalesce(1).map(d => d._1 + "," + d._2).
-      saveAsTextFile("/user/hdfs/temp2/analyzeSum/chanpin-manyi")
-    emotionRDD.filter(d => d._1.contains("抱怨点")).coalesce(1).map(d => d._1 + "," + d._2).
-      saveAsTextFile("/user/hdfs/temp2/analyzeSum/chanpin-baoyuan")
-    emotionRDD.unpersist()
+//    val temp = a.map { case (url, feature, num) => (feature, num) }.reduceByKey((f1, f2) => f1 + f2)
+//
+//    temp.cache()
+//    temp.filter(d => d._1.startsWith("产品") && d._1.contains("关注点")).coalesce(1).map(d => d._1 + "," + d._2).
+//      saveAsTextFile("/user/hdfs/temp2/analyzeSum/chanpin")
+//    temp.filter(d => d._1.startsWith("品牌")).coalesce(1).map(d => d._1 + "," + d._2).
+//      saveAsTextFile("/user/hdfs/temp2/analyzeSum/pinpai")
+//    temp.filter(d => d._1.startsWith("售后服务") || d._1.startsWith("销售服务")).coalesce(1).map(d => d._1 + "," + d._2).
+//      saveAsTextFile("/user/hdfs/temp2/analyzeSum/fuwu")
+//    temp.unpersist()
+//    a.unpersist()
+//
+//    val emotionRDD = hBaseTimeIntervalTest.map { case (url, comment) => {
+//      val array = dataBroadcast.value
+//      val arrayBuffer = new ArrayBuffer[(String, String, String)]
+//      for (map <- array) {
+//        for ((key, value) <- map) {
+//          var has = false
+//          for (s <- value if (!has)) if (comment.contains(s)) has = true
+//          if (has) arrayBuffer += ((url, key, comment))
+//        }
+//      }
+//      if (arrayBuffer.size > 0) arrayBuffer else null
+//    }
+//    }.filter(_ != null).flatMap(d => d).
+//      filter(d => d._2.contains("产品") && d._2.contains("关注点")).
+//      map { case (url, key, comment) => {
+//        val array = data2Broadcast.value
+//        val result = new Array[(String, String, Int)](2)
+//        val satisfy = array(0)
+//        val value = satisfy.getOrElse(key.replace("关注点", "满意点"), null)
+//        result(0) = if (value == null) null
+//        else {
+//          var has = false
+//          for (s <- value if (!has)) if (comment.contains(s)) has = true
+//          if (has) (url, key.replace("关注点", "满意点"), 1) else null
+//        }
+//        val complain = array(1).getOrElse(key.replace("关注点", "抱怨点"), null)
+//        result(1) = if (complain == null) null
+//        else {
+//          var has = false
+//          for (s <- complain if (!has)) if (comment.contains(s)) has = true
+//          if (has) (url, key.replace("关注点", "抱怨点"), 1) else null
+//        }
+//        result
+//      }
+//      }.flatMap(d => d).filter(_ != null).
+//      map { case (url, feature, num) => (feature, num) }.reduceByKey((f1, f2) => f1 + f2)
+//    emotionRDD.cache()
+//    println(emotionRDD.count)
+//    emotionRDD.coalesce(1).map(d => d._1 + "," + d._2).saveAsTextFile("/user/hdfs/temp2/analyzeSum/chanpin-")
+//    emotionRDD.filter(d => d._1.contains("满意点")).coalesce(1).map(d => d._1 + "," + d._2).
+//      saveAsTextFile("/user/hdfs/temp2/analyzeSum/chanpin-manyi")
+//    emotionRDD.filter(d => d._1.contains("抱怨点")).coalesce(1).map(d => d._1 + "," + d._2).
+//      saveAsTextFile("/user/hdfs/temp2/analyzeSum/chanpin-baoyuan")
+//    emotionRDD.unpersist()
   }
 
 
