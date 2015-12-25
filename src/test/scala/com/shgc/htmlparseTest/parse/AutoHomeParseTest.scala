@@ -20,7 +20,7 @@ class AutoHomeParseTest {
 
   @Test
   def testRun = {
-    val url = "http://club.autohome.com.cn/bbs/thread-c-3050-40932595-1.html"
+    val url = "http://club.autohome.com.cn/bbs/thread-c-2119-24634071-1.html"
     val html = Jsoup.connect(url).get().toString
     val doc = Jsoup.parse(html)
 
@@ -77,14 +77,15 @@ class AutoHomeParseTest {
       temp = b.select("div[class=plr26 rtopconnext] span:contains(来自) a").text.trim
       arr(11) = if(temp != null && temp.length > 0) ("comments", "clientside", temp) else null //手机客户端
       //设计评论部分
-      temp = b.select(".w740 .relyhfcon p a:contains(楼)").text().trim
-      println(temp)
+      temp = b.select(".w740 .relyhf, .w740 .quote").text().trim
+//      println(temp)
       if ( temp != null && temp.length > 0) {
         //回复楼上
         arr(12) = ("comments", "floor2", FloorUtil.getFloorNumber(temp))
         temp = b.select(".w740 .relyhfcon p:eq(0) a:eq(0)").text().trim
         arr(13) = if(temp != null && temp.length > 0) ("comments", "replywho", temp) else null
         temp =  b.select(".w740 .yy_reply_cont").text().trim
+//        temp = b.select(".w740").outerHtml()
         arr(14) = if(temp != null && temp.length > 0) ("comments", "comment", temp) else null
       } else {
         println("no replys")

@@ -54,30 +54,57 @@ object Analyze {
 
     val sc = SparkManagerFactor.getSparkContext(this.getClass.getName)
 
-    val dataBroadcast = sc.broadcast(data)
-    val data2Broadcast = sc.broadcast(data2)
+    val dataBroadcast = sc.broadcast(mapArray2Map(data))
+    val data2Broadcast = sc.broadcast(mapArray2Map(data2))
     val count = sc.accumulator(0)
 
     if (vehicleBand != null && carType != null) {
-      val dataRawRDD = HBaseSparkUtil.getAllRDD(sc, tableName, "comments", "comment")
-//      println(s"${vehicleBand}  ${carType} number:  ${dataRawRDD.count()}")
-      analysis(dataRawRDD, dataBroadcast, data2Broadcast, count)
+      val dataRawRDD = HBaseSparkUtil.getAllRDD(sc, tableName, "comments", "comment").map { case (url, comment) => {
+        count += 1
+        val array = dataBroadcast.value
+        val arrayBuffer = new ArrayBuffer[(String, String, String)]
+          for ((key, value) <- array) {
+            var has = false
+            for (s <- value if (!has)) if (comment.contains(s)) has = true
+            if (has) arrayBuffer += ((url, key, comment))
+          }
+        if (arrayBuffer.size > 0) arrayBuffer else null
+      }}.filter(_ != null).flatMap(d => d)
+
+      val emotion: RDD[(String, String, String)] = dataRawRDD.map{case (url, key, comment) =>{
+        if(key.startsWith("产品")){
+          val array2 = data2Broadcast.value
+          val array = array2.getOrElse(key.replace("关注点", "抱怨点"), null)
+          //        var result: (String, String, String) = (null, null, null)
+          var has = false
+          if(array == null) {
+            //抱怨点关键词没找到，开始找满意点关键词
+            val satisfy = array2.getOrElse(key.replace("关注点", "满意点"), null)
+            if(satisfy != null){
+              //找到满意点关键词了
+              for(w <- satisfy if(!has)) if(comment.contains(w)) has = true
+              if(has) (url, key, Emotion.positive.toString) else (url, key, Emotion.neutral.toString)//含有满意关键词则满意，否则就是中性
+            } else (url, key, Emotion.notFind.toString) //满意和抱怨的关键词条配置文件中没有找到
+          } else {
+            //找到抱怨点关键词
+            for(word <- array if(!has)) if(comment.contains(word)) has = true
+            if(has)(url, key, Emotion.negative.toString) //评论中含有抱怨点关键词
+            else {
+              //不含有抱怨关键词，开始找满意关键词
+              val satisfy = array2.getOrElse(key.replace("关注点", "满意点"), null)
+              for(w <- satisfy if(!has)) if(comment.contains(w)) has = true
+              if(has) (url, key, Emotion.positive.toString) else (url, key, Emotion.neutral.toString)
+            }
+          }
+        }else {
+          (url, key, Emotion.notFind.toString)
+        }
+      }}
+      emotion.saveAsTextFile("/user/hdfs/temp2/analyze")
     } else if(vehicleBand != null) {
       val dataRawRDD = HBaseSparkUtil.getVehicleBandRDD(sc, vehicleBand, tableName, "comments", "comment")
       println(s"${vehicleBand} number:  ${dataRawRDD.count}")
-      analysis(dataRawRDD, dataBroadcast, data2Broadcast, count)
     }
-//    val hBaseScanTest = HBaseSparkUtil.getWebsiteRDD(sc, "autohome", "hh", "comments", "comment")
-//    println(s"autohome:  " + hBaseScanTest.count())
-
-//    val hBaseCarTypeTest = HBaseSparkUtil.getCarTypeRDD(sc, "奔奔", "hh", "comments", "comment")
-//    println(s"奔奔:  " + hBaseCarTypeTest.count())
-//
-//    val hBaseTimeIntervalTest = HBaseSparkUtil.getTimeInterval(sc, "\\w+|\\.+\\|2015\\d{10}\\|.+", tableName, "comments", "comment")
-//    println(s"2015:  ${hBaseTimeIntervalTest.count()}")
-
-//    val hBaseSelect = HBaseSparkUtil.select(sc, "hh", "comments", "comment", carType = "奔奔", website = "autohome", timeIntervalRegex = ".*2015.*")
-//        println("select: " + hBaseSelect.count())
 
     println("counter: " + count)
     sc.stop()
@@ -89,6 +116,101 @@ object Analyze {
 
   }
 
+  def test(url: String, comment: String,
+           array1: Map[String, Array[String]], array2: Map[String, Array[String]]): Array[(String, String, String)] = {
+    val arrayBuffer = new ArrayBuffer[(String, String, String)]
+    //        for (map <- array) {
+    for ((key, value) <- array1) {
+      var has = false
+      for (s <- value if (!has)) if (s.length > 0 && comment.contains(s)) {
+        has = true; println(key + " : " + s)
+      }
+//      var has = false
+      println("==========" + key)
+      val array = array2.getOrElse(key.replace("关注点", "抱怨点"), null)
+      if (array == null) {
+        println(key.replace("关注点", "抱怨点"))
+        //抱怨点关键词没找到，开始找满意点关键词
+        val satisfy = array2.getOrElse(key.replace("关注点", "满意点"), null)
+        if (satisfy != null) {
+          //找到满意点关键词了
+          for (w <- satisfy if (!has)) if (comment.contains(w)) has = true
+          if (has) arrayBuffer += ((url, key, Emotion.positive.toString)) else arrayBuffer += ((url, key, Emotion.neutral.toString)) //含有满意关键词则满意，否则就是中性
+        } //else arrayBuffer += ((url, key, Emotion.notFind.toString)) //满意和抱怨的关键词条配置文件中没有找到
+      } else {
+        //找到抱怨点关键词
+        for (word <- array if (!has)) if (comment.contains(word)) has = true
+        if (has) arrayBuffer += ((url, key, Emotion.negative.toString)) //评论中含有抱怨点关键词
+        else {
+          //不含有抱怨关键词，开始找满意关键词
+          val satisfy = array2.getOrElse(key.replace("关注点", "满意点"), null)
+          for (w <- satisfy if (!has)) if (comment.contains(w)) has = true
+          if (has) arrayBuffer += ((url, key, Emotion.positive.toString)) else arrayBuffer += ((url, key, Emotion.neutral.toString))
+        }
+      }
+    }
+    arrayBuffer.toArray
+  }
+
+  def oneFunction(url: String, comment: String,
+                  array: Map[String, Array[String]], array2: Map[String, Array[String]]): Array[(String, String, String)] ={
+    val arrayBuffer = new ArrayBuffer[(String, String, String)]
+    //        for (map <- array) {
+    for ((key, value) <- array) {
+      var has = false
+      for (s <- value if (!has)) if ( s.length > 0 && comment.contains(s)) {has = true; println(key+" : " + s)}
+
+      if (has && key.startsWith("产品")) {
+        //找抱怨点关键词，然后是满意点，都找不到则没有
+        val complain = array2.getOrElse(key.replace("关注点", "抱怨点"), null)
+        if(complain == null) {// 没找到抱怨点的关键词字段
+        //找满意点
+        val satisfy = array2.getOrElse(key.replace("关注点", "满意点"), null)
+          if(satisfy == null) arrayBuffer += ((url, key, Emotion.notFind.toString)) //没找到满意点关键词
+          else {
+            //找到满意点关键词，满意或者中立
+            var has2 = false
+            for( word <- satisfy if(!has2)) if(comment.contains(word)) has2 = true
+            if(has2) arrayBuffer += ((url, key, Emotion.positive.toString))
+            else arrayBuffer += ((url, key, Emotion.neutral.toString))
+          }
+        } else {
+          //找到抱怨点关键词, 抱怨、满意、或中立
+          var has2 = false
+          for(word <- complain if(!has2))if(comment.contains(word)) has2 = true
+          if(has2) arrayBuffer += ((url, key, Emotion.negative.toString)) else {
+            //抱怨关键点没找到，开始找满意点
+            val satisfy = array2.getOrElse(key.replace("关注点", "满意点"), null)
+            if(satisfy == null) arrayBuffer += ((url, key, Emotion.neutral.toString)) //没找到满意点关键词
+            else {
+              //找到满意点关键词，满意或者中立
+              var has2 = false
+              for( word <- satisfy if(!has2)) if(comment.contains(word)) has2 = true
+              if(has2) arrayBuffer += ((url, key, Emotion.positive.toString))
+              else arrayBuffer += ((url, key, Emotion.neutral.toString))
+            }
+          }
+        }
+      }else if(has){
+        arrayBuffer += ((url, key, Emotion.notFind.toString))
+      }
+    }
+    //        }
+    if (arrayBuffer.size > 0) arrayBuffer.toArray else null
+  }
+
+
+  def mapArray2Map(mapArray: Array[Map[String, Array[String]]]): Map[String, Array[String]] = {
+    if(mapArray == null || mapArray.size == 0) return null
+    val map = scala.collection.mutable.HashMap.empty[String, Array[String]]
+    for(m <- mapArray){
+      for((key, value) <- m){
+        if(map.contains(key)) println("there are conflits in hash map")
+        map(key) = value
+      }
+    }
+    map.toMap
+  }
 
   def analysis(hBaseTimeIntervalTest: RDD[(String, String)], dataBroadcast: Broadcast[Array[Map[String, Array[String]]]],
                 data2Broadcast: Broadcast[Array[Map[String, Array[String]]]],
@@ -105,9 +227,8 @@ object Analyze {
         }
       }
       if (arrayBuffer.size > 0) arrayBuffer else null
-    }
-    }.filter(_ != null).flatMap(d => d)
-    a.cache()
+    }}.filter(_ != null).flatMap(d => d)
+//    a.cache()
     a.saveAsTextFile("/user/hdfs/temp2/analyze")
 
 //    val temp = a.map { case (url, feature, num) => (feature, num) }.reduceByKey((f1, f2) => f1 + f2)

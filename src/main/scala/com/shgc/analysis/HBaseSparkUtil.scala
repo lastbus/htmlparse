@@ -22,9 +22,11 @@ object HBaseSparkUtil extends Serializable{
     Base64.encodeBytes(proto.toByteArray)
   }
 
-  def getAllRDD(sc: SparkContext, tableName: String, columnFamily: String, column: String): RDD[(String, String)] ={
+  def getAllRDD(sc: SparkContext, tableName: String,
+                columnFamily: String, column: String): RDD[(String, String)] ={
     val columnFamilyBytes = Bytes.toBytes(columnFamily)
     val columnBytes = Bytes.toBytes(column)
+    val columnBytes2 = Bytes.toBytes("username")
     sc.hadoopConfiguration.addResource("hbase-site.xml")
     sc.hadoopConfiguration.set(TableInputFormat.INPUT_TABLE, tableName)
     sc.newAPIHadoopRDD(sc.hadoopConfiguration, classOf[TableInputFormat],
@@ -32,7 +34,10 @@ object HBaseSparkUtil extends Serializable{
       map(d =>{
         val key = d._2.getRow
         val value = d._2.getValue(columnFamilyBytes, columnBytes)
-        if(key != null && value != null)(new String(key), new String(value)) else null
+        val userName = d._2.getValue(columnFamilyBytes, columnBytes2)
+        if(key != null && value != null && userName != null)
+          (new String(key)+ "," + new String(key).split("\\|")(0)+ "," + (new String(userName)).trim, new String(value))
+        else ("", "")
       })
   }
 

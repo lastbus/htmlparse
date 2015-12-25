@@ -2,6 +2,9 @@ package com.shgc
 
 import java.util.{Date, Locale}
 import java.util.{Date, Locale}
+
+import com.shgc.analysis.Emotion
+
 //import java.text.DateFormat
 import java.text.DateFormat._
 
@@ -13,6 +16,8 @@ import scala.collection.mutable
  */
 object App  {
   def main(args: Array[String]): Unit ={
+    println(Emotion.positive.toString)
+
     println( "Hello World!" )
     // Make a list via the companion object factory
     val sortedSet = mutable.SortedSet("20150131","20151201","20141231","20131231", "20080101")

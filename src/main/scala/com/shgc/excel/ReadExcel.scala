@@ -25,8 +25,6 @@ class ReadExcel {
 
 
   def run(wb: Workbook, sheetName: String, headColumn: Int): Map[String, Array[String]] ={
-
-
 //    println(sheetName)
     val sheet = wb.getSheet(sheetName)
     val num = sheet.getRow(0).getLastCellNum
@@ -38,7 +36,7 @@ class ReadExcel {
       val rows1 = row.cellIterator()
       while (rows1.hasNext){
         val row = rows1.next()
-        rowArray(row.getColumnIndex) = row.getStringCellValue
+        rowArray(row.getColumnIndex) = row.getStringCellValue.trim
       }
       heads(i) = rowArray
     }
@@ -47,15 +45,15 @@ class ReadExcel {
     val rowN = new Array[String](num)
     for(i <- 0 until num){
       val rows = sheet.rowIterator()
-      //跳过三行
+      //跳过 n 行
       for(j <- 0 until headColumn) rows.next()
       val bf = new StringBuilder
       //读取第 i 列数据
       while (rows.hasNext){
         val row = rows.next()
         val cell = row.getCell(i)
-        if(cell != null && cell.getStringCellValue.length > 0){
-          bf.append(cell.getStringCellValue).append(";")
+        if(cell != null && cell.getStringCellValue.trim.length > 0){
+          bf.append(cell.getStringCellValue.trim).append(";")
         }
       }
       if(bf.size > 0)rowN(i) = bf.toString()
@@ -66,6 +64,7 @@ class ReadExcel {
     for(i <- 0 until num){
       if(rowN(i) != null){
         val keyBuilder = new StringBuilder()
+        if(sheetName.equals("服务关注点")) keyBuilder.append("服务,")
         for(j <- 0 until headColumn){
           keyBuilder.append(getString(heads(j), i))
           if(j != headColumn - 1) keyBuilder.append(",")
