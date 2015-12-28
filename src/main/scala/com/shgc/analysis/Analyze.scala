@@ -100,11 +100,22 @@ object Analyze {
           (url, key, Emotion.notFind.toString)
         }
       }}
+      emotion.map(d => {
+
+        val a = d._1.split("\\|")
+        val b = d._2.split(",")
+        val sb = new StringBuilder
+        for( temp <- a) sb.append(temp).append(",")
+        for(temp <- b) sb.append(temp).append(",")
+        sb.append(d._3)
+      })
       emotion.saveAsTextFile("/user/hdfs/temp2/analyze")
     } else if(vehicleBand != null) {
       val dataRawRDD = HBaseSparkUtil.getVehicleBandRDD(sc, vehicleBand, tableName, "comments", "comment")
       println(s"${vehicleBand} number:  ${dataRawRDD.count}")
     }
+
+
 
     println("counter: " + count)
     sc.stop()
@@ -114,6 +125,30 @@ object Analyze {
 
 
 
+  }
+
+  def t(sc: SparkContext): Unit ={
+    val time1 = new SimpleDateFormat("yyyyMMddHHmmss")
+    val time2 = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+
+    sc.textFile("/user/hdfs/temp2/analyze").map(d => {
+      val dd = d.substring(1, d.length - 1)
+      val sb = new StringBuilder
+      val array = dd.split(",")
+      val array2 = array(0).split("\\|")
+      for(i <- 0 until array2.length) {
+        if(i == 3) {
+          try{
+            val t = time1.parse(array2(i))
+            sb.append(time2.format(t)).append(",")
+          }catch {
+            case _: Exception => println(array2(i))
+          }
+        } else sb.append(array2(i)).append(",")
+      }
+      for(i <- 2 until array.length) sb.append(array(i)).append(",")
+      sb.toString().substring(0, sb.length - 1)
+    }).saveAsTextFile("/user/hdfs/temp2/analyze2")
   }
 
   def test(url: String, comment: String,

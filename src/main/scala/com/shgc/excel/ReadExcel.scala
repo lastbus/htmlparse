@@ -8,7 +8,7 @@ import scala.StringBuilder
 import scala.collection.mutable
 
 /**
- * Created by Administrator on 2015/12/9.
+ * Created by make on 2015/12/9.
  */
 class ReadExcel {
 
@@ -20,6 +20,7 @@ class ReadExcel {
     for(i <- 0 until names.length){
       array(i) = run(wb, names(i)._1, names(i)._2)
     }
+    wb.close()
     array
   }
 
